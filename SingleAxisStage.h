@@ -79,7 +79,7 @@ public:
     int Home();
 
     bool IsContinuousFocusDrive() const override { return false; }
-    int IsStageSequenceable(bool&) const override { return false; }
+    int IsStageSequenceable(bool& f) const override { f = false; return DEVICE_OK; }
 
 private:
     std::unique_ptr<MotorDrive> Connect() const;
