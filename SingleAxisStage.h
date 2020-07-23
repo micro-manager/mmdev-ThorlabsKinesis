@@ -55,6 +55,7 @@ class SingleAxisStage final : public CStageBase<SingleAxisStage> {
     bool isRotational_{ false };
     double deviceUnitsPerUm_{ 1.0 }; // Per degree if rotational
     int pollingIntervalMs_{ 200 };
+    bool didEnable_{ false };
 
     // Dynamic state:
     MM::MMTime lastMovementStart_{ 0.0 };

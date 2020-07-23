@@ -179,12 +179,26 @@ SingleAxisStage::Initialize() {
 
     CDeviceUtils::SleepMs(100); // Ensure the above requests finished (100 ms cycle)
 
+    if (!motorDrive_->IsChannelEnabled()) {
+        // A call to XXX_EnableChannel was added to Thorlabs example code at
+        // some point, but only for some devices. If this causes errors, we may
+        // need to branch depending on device type. At least some devices
+        // always start up disabled, so enabling _is_ necessary for those.
+        err = motorDrive_->SetChannelEnabled(true);
+        if (err)
+            return ERR_OFFSET + err;
+        didEnable_ = true;
+    }
+
     return DEVICE_OK;
 }
 
 
 int
 SingleAxisStage::Shutdown() {
+    if (didEnable_)
+        motorDrive_->SetChannelEnabled(false);
+
     if (motorDrive_)
         motorDrive_->StopPolling();
 

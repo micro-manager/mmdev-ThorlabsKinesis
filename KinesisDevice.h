@@ -219,6 +219,10 @@ public:
         return enabled ? Kinesis_EnableChannel() : Kinesis_DisableChannel();
     }
 
+    bool IsChannelEnabled() {
+        return GetStatusBits() & StatusBits::StatusBitsChannelEnabled;
+    }
+
     enum TravelMode {
         TravelModeLinear = 1,
         TravelModeRotational = 2,
