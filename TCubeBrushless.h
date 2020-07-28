@@ -1,7 +1,8 @@
 // Thorlabs Kinesis device adapter for Micro-Manager
 // Author: Mark A. Tsuchida
 //
-// Copyright 2019 The Board of Regents of the University of Wisconsin System
+// Copyright 2019-2020 The Board of Regents of the University of Wisconsin
+// System
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
