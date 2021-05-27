@@ -173,6 +173,11 @@ std::vector<std::string> EnumerateSerialNumbers() {
     STATIC_DLL_FUNC(kinesisDll, TLI_GetDeviceListSize, getDeviceListSizeFunc);
     STATIC_DLL_FUNC(kinesisDll, TLI_GetDeviceListExt, getDeviceListExtFunc);
 
+    // TLI_BuildDeviceList() fails with error 16 (FT_NoDLLLoaded) if we don't
+    // help it load this FTDI DLL in the Thorlabs/Kinesis directory.
+    DLLAccess ftdiDll{ "ftd2xx.dll" };
+    ftdiDll.IsValid(); // Trigger the lazy load
+
     short err;
     err = buildDeviceListFunc();
     if (err)
