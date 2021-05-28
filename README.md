@@ -9,6 +9,11 @@ to generate a reasonable wrapper around the Thorlabs Kinesis SDK.
 Building
 --------
 
+Please see the
+[Releases](https://github.com/micro-manager/mmdev-ThorlabsKinesis/releases) page
+for pre-built binaries. Make sure to choose a version that matches the Device
+Interface Version shown in `Help > About Micro-Manager...`.
+
 The device adapter is Windows-only and requires Visual Studio 2019 or later.
 
 The Thorlabs Kinesis Software needs to be installed in its default location
@@ -29,6 +34,9 @@ Building the ThorlabsKinesis project should produce
 
 Using
 -----
+
+Place the device adapter `mmgr_dal_ThorlabsKinesis.dll` in the Micro-Manager
+folder.
 
 The Thorlabs Kinesis Software needs to be installed. There is no need to copy
 any DLLs (other than the device adapter itself) into the Micro-Manager
