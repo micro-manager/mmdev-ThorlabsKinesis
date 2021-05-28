@@ -15,8 +15,8 @@ The Thorlabs Kinesis Software needs to be installed in its default location
 (`C:\Program Files\Thorlabs\Kinesis`).
 
 Place the mmCoreAndDevices repo at the same directory level as this repository
-(thorlabs-kinesis-mm-adapter). The MMDevice headers and static library are
-referenced using relative paths.
+(mmdev-ThorlabsKinesis). The MMDevice headers and static library are referenced
+using relative paths.
 
 Before building this project, Micro-Manager's `MMDevice-SharedRuntime` project
 should be built using the same Platform, Configuration, and compiler version
