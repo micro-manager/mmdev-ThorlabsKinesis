@@ -6,6 +6,55 @@ currently provided separately because it requires C++14, which is not available
 in the current mmCoreAndDevices build system. C++14 features are needed in order
 to generate a reasonable wrapper around the Thorlabs Kinesis SDK.
 
+Supported devices (many have not been tested with hardware):
+**BenchtopBrushless,
+BenchtopDCServo,
+BenchtopStepper,
+IntegratedStepper,
+KCubeBrushless,
+KCubeDCServo,
+KCubeStepper,
+TCubeBrushless,
+TCubeDCServo,
+TCubeStepper,
+VerticalStage**.
+
+Known Kinesis devices that are **not** currently supported:
+BenchtopNanoTrak,
+BenchtopPiezo,
+BenchtopPrecisionPiezo,
+BenchtopVoiceCoil,
+FilterFlipper,
+IntegratedPrecisionPiezo,
+KCubeInertialMotor,
+KCubeLaserDiode,
+KCubeLaserSource,
+KCubeNanoTrak
+KCubePiezo,
+KCubePositionAligner,
+KCubeSolenoid,
+KCubeStrainGauge,
+ModularNanoTrak,
+ModularPiezo,
+ModularStepper,
+Polarizer,
+TCubeInertialMotor,
+TCubeLaserDiode,
+TCubeLaserSource,
+TCubeNanoTrak,
+TCubePiezo,
+TCubeQuad (or position aligner),
+TCubeSolenoid,
+TCubeStrainGauge,
+TCubeTEC.
+Most of these should not be that difficult to support with some more work.
+
+Only basic functionality (moving, getting position, and homing) is supported.
+In particular, there are no properties that show up in Device Property Browser
+at this time. Use Stage Control for manual control. Detailed configuration of
+the devices should be done using the Kinesis application.
+
+
 Building
 --------
 
