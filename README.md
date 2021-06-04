@@ -6,6 +6,8 @@ currently provided separately because it requires C++14, which is not available
 in the current mmCoreAndDevices build system. C++14 features are needed in order
 to generate a reasonable wrapper around the Thorlabs Kinesis SDK.
 
+Windows only.
+
 Supported devices (many have not been tested with hardware):
 **BenchtopBrushless,
 BenchtopDCServo,
@@ -55,44 +57,31 @@ at this time. Use Stage Control for manual control. Detailed configuration of
 the devices should be done using the Kinesis application.
 
 
-Building
---------
+Installing
+----------
 
 Please see the
 [Releases](https://github.com/micro-manager/mmdev-ThorlabsKinesis/releases) page
 for pre-built binaries. Make sure to choose a version that matches the Device
 Interface Version shown in `Help > About Micro-Manager...`.
 
-The device adapter is Windows-only and requires Visual Studio 2019 or later.
-
-The Thorlabs Kinesis Software needs to be installed in its default location
-(`C:\Program Files\Thorlabs\Kinesis`).
-
-Place the mmCoreAndDevices repo at the same directory level as this repository
-(mmdev-ThorlabsKinesis). The MMDevice headers and static library are referenced
-using relative paths.
-
-Before building this project, Micro-Manager's `MMDevice-SharedRuntime` project
-should be built using the same Platform, Configuration, and compiler version
-(this may require temporarily switching the Platform Toolset of the
-`MMDevice-SharedRuntime` project).  Compiler versions must match because
-MMDevice is a static library.
-
-Building the ThorlabsKinesis project should produce
-`mmgr_dal_ThorlabsKinesis.dll`.
-
-Using
------
-
 Place the device adapter `mmgr_dal_ThorlabsKinesis.dll` in the Micro-Manager
 folder.
 
-The Thorlabs Kinesis Software needs to be installed. There is no need to copy
-any DLLs (other than the device adapter itself) into the Micro-Manager
-directory.
+The [Thorlabs Kinesis
+Software](https://www.thorlabs.com/newgrouppage9.cfm?objectgroup_id=10285)
+needs to be installed. The most recenly tested version is Kinesis 1.14.27, but
+any close version is expected to work. There is no need to copy any DLLs (other
+than the device adapter itself) into the Micro-Manager directory.
 
-The most recenly tested version is Kinesis 1.14.27, but any close version is
-expected to work.
+
+Finally, Microsoft Visual C++ Redistributable needs to be installed or updated
+([64-bit](https://aka.ms/vs/16/release/vc_redist.x64.exe) /
+[32-bit](https://aka.ms/vs/16/release/vc_redist.x86.exe) /
+[info](https://support.microsoft.com/en-us/topic/the-latest-supported-visual-c-downloads-2647da03-1eea-4433-9aff-95f26a218cc0)).
+
+Configuring
+-----------
 
 In the Hardware Configuration Wizard, add the ThorlabsKinesis (hub) device. If
 compatible devices are detected, they will show up as "peripherals" on the hub.
@@ -128,6 +117,12 @@ In the Kinesis application, connect to the device. Then,
 6. To restore the display units, click on Settings, uncheck Use Device Units,
    and click OK.
 
+Using
+-----
+
+Once the stage is configured, you should be able to control it using the
+**Stage Control** window, available from the **Tools** menu.
+
 ### Homing
 
 If your actuator requires homing before use, the easiest way is to use the
@@ -147,3 +142,24 @@ for (int i = 0; i < stages.length; i++) {
 
 (Or make the homing run in parallel by putting the `waitForDevice` in a separate
 `for` loop -- but it's best to do so after testing everything.)
+
+Building
+--------
+
+The device adapter is Windows-only and requires Visual Studio 2019 or later.
+
+The Thorlabs Kinesis Software needs to be installed in its default location
+(`C:\Program Files\Thorlabs\Kinesis`).
+
+Place the mmCoreAndDevices repo at the same directory level as this repository
+(mmdev-ThorlabsKinesis). The MMDevice headers and static library are referenced
+using relative paths.
+
+Before building this project, Micro-Manager's `MMDevice-SharedRuntime` project
+should be built using the same Platform, Configuration, and compiler version
+(this may require temporarily switching the Platform Toolset of the
+`MMDevice-SharedRuntime` project).  Compiler versions must match because
+MMDevice is a static library.
+
+Building the ThorlabsKinesis project should produce
+`mmgr_dal_ThorlabsKinesis.dll`.
