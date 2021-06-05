@@ -75,10 +75,11 @@ any close version is expected to work. There is no need to copy any DLLs (other
 than the device adapter itself) into the Micro-Manager directory.
 
 
-Finally, Microsoft Visual C++ Redistributable needs to be installed or updated
+Finally, the [Microsoft Visual C++
+Redistributable](https://support.microsoft.com/en-us/topic/the-latest-supported-visual-c-downloads-2647da03-1eea-4433-9aff-95f26a218cc0)
 ([64-bit](https://aka.ms/vs/16/release/vc_redist.x64.exe) /
-[32-bit](https://aka.ms/vs/16/release/vc_redist.x86.exe) /
-[info](https://support.microsoft.com/en-us/topic/the-latest-supported-visual-c-downloads-2647da03-1eea-4433-9aff-95f26a218cc0)).
+[32-bit](https://aka.ms/vs/16/release/vc_redist.x86.exe)) needs to be installed
+or updated.
 
 Configuring
 -----------
