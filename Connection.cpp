@@ -34,7 +34,7 @@
 
 #include "DeviceEnumeration.h"
 
-#include "BenchtopBrushless.h"
+#include "BenchtopBrushless200.h"
 #include "BenchtopDCServo.h"
 #include "BenchtopStepper.h"
 #include "KCubeBrushless.h"
@@ -51,7 +51,7 @@ std::shared_ptr<KinesisDeviceConnection> MakeConnection(std::string const& seria
     std::unique_ptr<KinesisDeviceAccess> access;
     switch (TypeIDOfSerialNo(serialNo)) {
     case TypeIDBenchtopBrushless:
-        access = std::make_unique<BenchtopBrushlessAccess>(serialNo);
+        access = std::make_unique<BenchtopBrushless200Access>(serialNo);
         break;
 
     case TypeIDBenchtopDCServo1Channel:
@@ -112,7 +112,7 @@ std::unique_ptr<MotorDrive> MakeKinesisMotorDrive(
 
     switch (TypeIDOfSerialNo(connection->SerialNo())) {
     case TypeIDBenchtopBrushless:
-        return std::make_unique<BenchtopBrushless>(connection, channel);
+        return std::make_unique<BenchtopBrushless200>(connection, channel);
 
     case TypeIDBenchtopDCServo1Channel:
     case TypeIDBenchtopDCServo3Channel:
