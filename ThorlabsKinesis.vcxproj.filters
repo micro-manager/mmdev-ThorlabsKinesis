@@ -72,6 +72,9 @@
     <ClInclude Include="DLLAccess.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="BenchtopBrushless300.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DeviceEnumeration.cpp">
@@ -126,6 +129,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="DLLAccess.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="BenchtopBrushless300.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
