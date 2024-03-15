@@ -167,7 +167,6 @@ void DisableSimulatedDevices() {
     func();
 }
 
-
 std::vector<std::string> EnumerateSerialNumbers() {
     STATIC_DLL_FUNC(kinesisDll, TLI_BuildDeviceList, buildDeviceListFunc);
     STATIC_DLL_FUNC(kinesisDll, TLI_GetDeviceListSize, getDeviceListSizeFunc);
@@ -187,7 +186,7 @@ std::vector<std::string> EnumerateSerialNumbers() {
 
     // Serial numbers are 8 digits each. Compute size needed for a
     // comma-separated list, plus some extra bytes.
-    size_t buflen = 9 * deviceCount + 100;
+    size_t buflen = 10 * deviceCount + 100;
     auto serialNoBuffer = std::make_unique<char[]>(buflen);
 
     // (Pass size minus one just to be safe.)

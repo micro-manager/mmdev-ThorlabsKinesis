@@ -30,7 +30,7 @@
     <ClInclude Include="KinesisDevice.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="BenchtopBrushless.h">
+    <ClInclude Include="BenchtopBrushless200.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="KCubeBrushless.h">
@@ -86,7 +86,7 @@
     <ClCompile Include="KinesisDeviceAdapter.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="BenchtopBrushless.cpp">
+    <ClCompile Include="BenchtopBrushless200.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="KCubeBrushless.cpp">
