@@ -58,7 +58,7 @@ public:
 };
 
 inline bool IsValidSerialNo(std::string const& serialNo) {
-    // 'serialNo' is an exactly 8-character string consisting of digits
+    // 'serialNo' is an 8 or 9 character string consisting of digits
     if (serialNo.size() > 9 || serialNo.size() < 8)
         return false;
     for (char d : serialNo) {
@@ -77,7 +77,7 @@ inline uint32_t TypeIDOfSerialNo(std::string const& serialNo) {
     }
     else
     {
-        return (serialNo[0] - '0') * 100 + serialNo[0] - '0' * 10 + (serialNo[1] - '0');
+        return (serialNo[0] - '0') * 100 + (serialNo[1] - '0') * 10 + (serialNo[2] - '0');
     }
 }
 
