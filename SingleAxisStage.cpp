@@ -37,11 +37,13 @@
 #include "Connections.h"
 #include "DeviceEnumeration.h"
 #include "Errors.h"
+#include "tinyxml2.h"
+#include "KinesisXMLFunctions.h"
 
 #include <algorithm>
 #include <cmath>
 #include <limits>
-
+#include <vector>
 
 namespace {
     char const* const PROP_StageType = "StageType";
@@ -49,6 +51,7 @@ namespace {
     char const* const PROPVAL_StageTypeRotational = "Rotational";
     char const* const PROP_DeviceUnitsPerMillimeter = "DeviceUnitsPerMillimeter";
     char const* const PROP_DeviceUnitsPerRevolution = "DeviceUnitsPerRevolution";
+    char const* const PROP_StageNameSelection = "StagePartNumber";
 }
 
 
@@ -84,6 +87,19 @@ SingleAxisStage::SingleAxisStage(std::string const& name,
     // In general, the user must tell us whether the stage is linear or
     // rotational. (As far as I can tell, *_GetMotorTravelMode() doesn't work
     // as expected.)
+
+    std::vector<std::string> availableStages;
+    CreateStringProperty(PROP_StageNameSelection, "DEFAULT",
+        false, nullptr, true);
+    int err = KinesisXMLFunctions::getSupportedStages(TypeIDOfSerialNo(serialNo), &availableStages);
+
+    if (!err)
+    {
+        for (std::string stage : availableStages)
+        {
+            AddAllowedValue(PROP_StageNameSelection, stage.c_str());
+        }
+    }
 
     switch (TypeIDOfSerialNo(serialNo)) {
     case TypeIDCageRotator:

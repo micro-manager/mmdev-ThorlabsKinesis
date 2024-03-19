@@ -33,10 +33,12 @@
     <ClInclude Include="KCubeDCServo.h" />
     <ClInclude Include="KCubeStepper.h" />
     <ClInclude Include="KinesisDevice.h" />
+    <ClInclude Include="KinesisXMLFunctions.h" />
     <ClInclude Include="SingleAxisStage.h" />
     <ClInclude Include="TCubeBrushless.h" />
     <ClInclude Include="TCubeDCServo.h" />
     <ClInclude Include="TCubeStepper.h" />
+    <ClInclude Include="tinyxml2.h" />
     <ClInclude Include="UnsupportedDevice.h" />
     <ClInclude Include="VerticalStage.h" />
   </ItemGroup>
@@ -55,10 +57,12 @@
     <ClCompile Include="KCubeStepper.cpp" />
     <ClCompile Include="KinesisDevice.cpp" />
     <ClCompile Include="KinesisDeviceAdapter.cpp" />
+    <ClCompile Include="KinesisXMLFunctions.cpp" />
     <ClCompile Include="SingleAxisStage.cpp" />
     <ClCompile Include="TCubeBrushless.cpp" />
     <ClCompile Include="TCubeDCServo.cpp" />
     <ClCompile Include="TCubeStepper.cpp" />
+    <ClCompile Include="tinyxml2.cpp" />
     <ClCompile Include="VerticalStage.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
