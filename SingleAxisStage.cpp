@@ -54,6 +54,9 @@ namespace {
     char const* const PROP_StageNameSelection = "StagePartNumber";
 }
 
+//Show pre-init properties for all selection modes
+// Flag older versions of Kinesis and reject if too old
+// Find version when pragma pack issue was fixed
 
 namespace {
     // TODO C++17 will have std::clamp()
@@ -84,61 +87,98 @@ SingleAxisStage::SingleAxisStage(std::string const& name,
         SetErrorText(ERR_OFFSET + item.first, item.second.c_str());
     }
 
+    //Only some controllers allow the user to select the connected stage
+    switch (TypeIDOfSerialNo(serialNo)) {
+    case TypeIDBenchtopStepper1Channel:
+    case TypeIDBenchtopStepper3Channel:
+    case TypeIDKCubeDCServo:
+    case TypeIDKCubeStepper:
+    case TypeIDLongTravelStage:
+    case TypeIDTCubeDCServo:
+    case TypeIDTCubeStepper:
+        supportsStageSelection_ = true;
+        break;
+    }
+
+    //Only some controllers support stage identification. Some might also support selection
+    switch (TypeIDOfSerialNo(serialNo)) {
+    case TypeIDBenchtopBrushless200:
+    case TypeIDBenchtopBrushless300:
+    case TypeIDKCubeDCServo:
+    case TypeIDKCubeBrushless:
+    case TypeIDTCubeBrushless:
+    case TypeIDTCubeDCServo:
+        supportsAutoDetection_ = true;
+        break;
+    }
+
     // In general, the user must tell us whether the stage is linear or
     // rotational. (As far as I can tell, *_GetMotorTravelMode() doesn't work
     // as expected.)
 
-    std::vector<std::string> availableStages;
-    CreateStringProperty(PROP_StageNameSelection, "DEFAULT",
-        false, nullptr, true);
-    int err = KinesisXMLFunctions::getSupportedStages(TypeIDOfSerialNo(serialNo), &availableStages);
-
-    if (!err)
+    if (supportsStageSelection_)
     {
-        for (std::string stage : availableStages)
+        //Read compatible stages from the XML
+        std::vector<std::string> availableStages;
+        CreateStringProperty(PROP_StageNameSelection, "DEFAULT", false, nullptr, true);
+
+        int err = KinesisXMLFunctions::getSupportedStages(TypeIDOfSerialNo(serialNo), &availableStages);
+        if (!err)
         {
-            AddAllowedValue(PROP_StageNameSelection, stage.c_str());
+            for (std::string stage : availableStages)
+            {
+                AddAllowedValue(PROP_StageNameSelection, stage.c_str());
+            }
         }
     }
-
-    switch (TypeIDOfSerialNo(serialNo)) {
-    case TypeIDCageRotator:
-        isRotational_ = true;
-        break;
+    if (supportsAutoDetection_)
+    {
+        //Get stage name from controller if possible and load settings to UI
+        CreateStringProperty(PROP_StageNameSelection, "DEFAULT", true, nullptr, true);
     }
-    CreateStringProperty(PROP_StageType,
-        isRotational_ ? PROPVAL_StageTypeRotational : PROPVAL_StageTypeLinear,
-        false, nullptr, true);
-    AddAllowedValue(PROP_StageType, PROPVAL_StageTypeLinear);
-    AddAllowedValue(PROP_StageType, PROPVAL_StageTypeRotational);
 
-    // In general, the user must tell us how to convert from physical to device
-    // units. (As far as I can tell, there is no API to query the actuator lead
-    // screw pitch, or even the device units per motor revolution (device units
-    // are not equal to "steps"). And *_GetRealValueFromDeviceUnit() and
-    // *_GetDeviceUnitFromRealValue() seem to always return an error.)
+    //If there is not a way to load stage info, the user will need to specify settings
+    if(!supportsAutoDetection_ && !supportsStageSelection_)
+    {
+        switch (TypeIDOfSerialNo(serialNo)) {
+        case TypeIDCageRotator:
+            isRotational_ = true;
+            break;
+        }
+        CreateStringProperty(PROP_StageType,
+            isRotational_ ? PROPVAL_StageTypeRotational : PROPVAL_StageTypeLinear,
+            false, nullptr, true);
+        AddAllowedValue(PROP_StageType, PROPVAL_StageTypeLinear);
+        AddAllowedValue(PROP_StageType, PROPVAL_StageTypeRotational);
 
-    // The defaults below are set to small values to prevent accidents. Known
-    // defaults (taken from the Kinesis app) are given for integrated devices.
+        // In general, the user must tell us how to convert from physical to device
+        // units. (As far as I can tell, there is no API to query the actuator lead
+        // screw pitch, or even the device units per motor revolution (device units
+        // are not equal to "steps"). And *_GetRealValueFromDeviceUnit() and
+        // *_GetDeviceUnitFromRealValue() seem to always return an error.)
 
-    double defaultDeviceUnitsPerMm = 1.0;
-    switch (TypeIDOfSerialNo(serialNo)) {
-    case TypeIDLabJack050: defaultDeviceUnitsPerMm = 1228800.0; break;
-    case TypeIDLabJack490: defaultDeviceUnitsPerMm = 134737.0; break;
-    case TypeIDLongTravelStage: defaultDeviceUnitsPerMm = 409600.0; break;
-    case TypeIDVerticalStage: defaultDeviceUnitsPerMm = 25050.0; break;
+        // The defaults below are set to small values to prevent accidents. Known
+        // defaults (taken from the Kinesis app) are given for integrated devices.
+
+        double defaultDeviceUnitsPerMm = 1.0;
+        switch (TypeIDOfSerialNo(serialNo)) {
+        case TypeIDLabJack050: defaultDeviceUnitsPerMm = 1228800.0; break;
+        case TypeIDLabJack490: defaultDeviceUnitsPerMm = 134737.0; break;
+        case TypeIDLongTravelStage: defaultDeviceUnitsPerMm = 409600.0; break;
+        case TypeIDVerticalStage: defaultDeviceUnitsPerMm = 25050.0; break;
+        }
+        CreateFloatProperty(PROP_DeviceUnitsPerMillimeter,
+            defaultDeviceUnitsPerMm, false, nullptr, true);
+
+        double defaultDeviceUnitsPerRevolution = 360.0;
+        switch (TypeIDOfSerialNo(serialNo)) {
+        case TypeIDCageRotator:
+            defaultDeviceUnitsPerRevolution = 49152000.0;
+            break;
+        }
+        CreateFloatProperty(PROP_DeviceUnitsPerRevolution,
+            defaultDeviceUnitsPerRevolution, false, nullptr, true);
     }
-    CreateFloatProperty(PROP_DeviceUnitsPerMillimeter,
-        defaultDeviceUnitsPerMm, false, nullptr, true);
-
-    double defaultDeviceUnitsPerRevolution = 360.0;
-    switch (TypeIDOfSerialNo(serialNo)) {
-    case TypeIDCageRotator:
-        defaultDeviceUnitsPerRevolution = 49152000.0;
-        break;
-    }
-    CreateFloatProperty(PROP_DeviceUnitsPerRevolution,
-        defaultDeviceUnitsPerRevolution, false, nullptr, true);
 }
 
 

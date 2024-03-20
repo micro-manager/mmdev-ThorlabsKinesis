@@ -53,6 +53,8 @@ class SingleAxisStage final : public CStageBase<SingleAxisStage> {
 
     // Set during Initialize():
     std::unique_ptr<MotorDrive> motorDrive_;
+    bool supportsStageSelection_{ false };
+    bool supportsAutoDetection_{ false };
     bool isRotational_{ false };
     double deviceUnitsPerUm_{ 1.0 }; // Per degree if rotational
     int pollingIntervalMs_{ 200 };

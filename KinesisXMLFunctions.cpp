@@ -36,3 +36,11 @@ int KinesisXMLFunctions::getSupportedStages(uint32_t device_id, std::vector<std:
     }
     return doc.ErrorID();
 }
+
+int KinesisXMLFunctions::getStageSettings(std::string stageName, std::map<int, double>* settings)
+{
+    tinyxml2::XMLDocument doc;
+    doc.LoadFile(SETTINGS_XML_PATH.c_str());
+
+    return doc.ErrorID();
+}
