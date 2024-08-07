@@ -30,7 +30,7 @@
     <ClInclude Include="KinesisDevice.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="BenchtopBrushless.h">
+    <ClInclude Include="BenchtopBrushless200.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="KCubeBrushless.h">
@@ -72,6 +72,9 @@
     <ClInclude Include="DLLAccess.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="BenchtopBrushless300.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DeviceEnumeration.cpp">
@@ -83,7 +86,7 @@
     <ClCompile Include="KinesisDeviceAdapter.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="BenchtopBrushless.cpp">
+    <ClCompile Include="BenchtopBrushless200.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="KCubeBrushless.cpp">
@@ -126,6 +129,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="DLLAccess.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="BenchtopBrushless300.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -30,7 +30,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-#include "BenchtopBrushless.h"
+#include "BenchtopBrushless200.h"
 
 #include "DLLAccess.h"
 
@@ -41,20 +41,20 @@ static DLLAccess kinesisDll{ "Thorlabs.MotionControl.Benchtop.BrushlessMotor.dll
 
 
 bool
-BenchtopBrushlessAccess::IsKinesisDriverAvailable() {
+BenchtopBrushless200Access::IsKinesisDriverAvailable() {
     return kinesisDll.IsValid();
 }
 
 
 short
-BenchtopBrushlessAccess::Kinesis_Open() {
+BenchtopBrushless200Access::Kinesis_Open() {
     STATIC_DLL_FUNC(kinesisDll, BMC_Open, func);
     return func(CSerialNo());
 }
 
 
 short
-BenchtopBrushlessAccess::Kinesis_Close() {
+BenchtopBrushless200Access::Kinesis_Close() {
     STATIC_DLL_FUNC(kinesisDll, BMC_Close, func);
     func(CSerialNo());
     return 0;
@@ -62,42 +62,42 @@ BenchtopBrushlessAccess::Kinesis_Close() {
 
 
 short
-BenchtopBrushlessAccess::Kinesis_GetNumChannels() {
+BenchtopBrushless200Access::Kinesis_GetNumChannels() {
     STATIC_DLL_FUNC(kinesisDll, BMC_GetNumChannels, func);
     return func(CSerialNo());
 }
 
 
 short
-BenchtopBrushless::Kinesis_RequestSettings() {
+BenchtopBrushless200::Kinesis_RequestSettings() {
     STATIC_DLL_FUNC(kinesisDll, BMC_RequestSettings, func);
     return func(CSerialNo(), Channel());
 }
 
 
 short
-BenchtopBrushless::Kinesis_RequestStatusBits() {
+BenchtopBrushless200::Kinesis_RequestStatusBits() {
     STATIC_DLL_FUNC(kinesisDll, BMC_RequestStatusBits, func);
     return func(CSerialNo(), Channel());
 }
 
 
 bool
-BenchtopBrushless::Kinesis_StartPolling(int intervalMs) {
+BenchtopBrushless200::Kinesis_StartPolling(int intervalMs) {
     STATIC_DLL_FUNC(kinesisDll, BMC_StartPolling, func);
     return func(CSerialNo(), Channel(), intervalMs);
 }
 
 
 void
-BenchtopBrushless::Kinesis_StopPolling() {
+BenchtopBrushless200::Kinesis_StopPolling() {
     STATIC_DLL_FUNC(kinesisDll, BMC_StopPolling, func);
     func(CSerialNo(), Channel());
 }
 
 
 short
-BenchtopBrushless::Kinesis_GetHardwareInfo(char* modelNo, DWORD sizeOfModelNo,
+BenchtopBrushless200::Kinesis_GetHardwareInfo(char* modelNo, DWORD sizeOfModelNo,
     WORD* type, WORD* numChannels, char* notes, DWORD sizeOfNotes,
     DWORD* firmwareVersion, WORD* hardwareVersion, WORD* modificationState) {
 
@@ -116,49 +116,49 @@ BenchtopBrushless::Kinesis_GetHardwareInfo(char* modelNo, DWORD sizeOfModelNo,
 
 
 DWORD
-BenchtopBrushless::Kinesis_GetStatusBits() {
+BenchtopBrushless200::Kinesis_GetStatusBits() {
     STATIC_DLL_FUNC(kinesisDll, BMC_GetStatusBits, func);
     return func(CSerialNo(), Channel());
 }
 
 
 short
-BenchtopBrushless::Kinesis_EnableChannel() {
+BenchtopBrushless200::Kinesis_EnableChannel() {
     STATIC_DLL_FUNC(kinesisDll, BMC_EnableChannel, func);
     return func(CSerialNo(), Channel());
 }
 
 
 short
-BenchtopBrushless::Kinesis_DisableChannel() {
+BenchtopBrushless200::Kinesis_DisableChannel() {
     STATIC_DLL_FUNC(kinesisDll, BMC_DisableChannel, func);
     return func(CSerialNo(), Channel());
 }
 
 
 int
-BenchtopBrushless::Kinesis_GetMotorTravelMode() {
+BenchtopBrushless200::Kinesis_GetMotorTravelMode() {
     STATIC_DLL_FUNC(kinesisDll, BMC_GetMotorTravelMode, func);
     return func(CSerialNo(), Channel());
 }
 
 
 short
-BenchtopBrushless::Kinesis_SetMotorTravelMode(int mode) {
+BenchtopBrushless200::Kinesis_SetMotorTravelMode(int mode) {
     STATIC_DLL_FUNC(kinesisDll, BMC_SetMotorTravelMode, func);
     return func(CSerialNo(), Channel(), static_cast<MOT_TravelModes>(mode));
 }
 
 
 short
-BenchtopBrushless::Kinesis_ResetRotationModes() {
+BenchtopBrushless200::Kinesis_ResetRotationModes() {
     STATIC_DLL_FUNC(kinesisDll, BMC_ResetRotationModes, func);
     return func(CSerialNo(), Channel());
 }
 
 
 short
-BenchtopBrushless::Kinesis_SetRotationModes(int mode, int direction) {
+BenchtopBrushless200::Kinesis_SetRotationModes(int mode, int direction) {
     STATIC_DLL_FUNC(kinesisDll, BMC_SetRotationModes, func);
     return func(CSerialNo(), Channel(), static_cast<MOT_MovementModes>(mode),
         static_cast<MOT_MovementDirections>(direction));
@@ -166,49 +166,49 @@ BenchtopBrushless::Kinesis_SetRotationModes(int mode, int direction) {
 
 
 short
-BenchtopBrushless::Kinesis_RequestPosition() {
+BenchtopBrushless200::Kinesis_RequestPosition() {
     STATIC_DLL_FUNC(kinesisDll, BMC_RequestPosition, func);
     return func(CSerialNo(), Channel());
 }
 
 
 int
-BenchtopBrushless::Kinesis_GetPosition() {
+BenchtopBrushless200::Kinesis_GetPosition() {
     STATIC_DLL_FUNC(kinesisDll, BMC_GetPosition, func);
     return func(CSerialNo(), Channel());
 }
 
 
 long
-BenchtopBrushless::Kinesis_GetPositionCounter() {
+BenchtopBrushless200::Kinesis_GetPositionCounter() {
     STATIC_DLL_FUNC(kinesisDll, BMC_GetPositionCounter, func);
     return func(CSerialNo(), Channel());
 }
 
 
 short
-BenchtopBrushless::Kinesis_MoveToPosition(int index) {
+BenchtopBrushless200::Kinesis_MoveToPosition(int index) {
     STATIC_DLL_FUNC(kinesisDll, BMC_MoveToPosition, func);
     return func(CSerialNo(), Channel(), index);
 }
 
 
 bool
-BenchtopBrushless::Kinesis_CanHome() {
+BenchtopBrushless200::Kinesis_CanHome() {
     STATIC_DLL_FUNC(kinesisDll, BMC_CanHome, func);
     return func(CSerialNo(), Channel());
 }
 
 
 short
-BenchtopBrushless::Kinesis_Home() {
+BenchtopBrushless200::Kinesis_Home() {
     STATIC_DLL_FUNC(kinesisDll, BMC_Home, func);
     return func(CSerialNo(), Channel());
 }
 
 
 short
-BenchtopBrushless::Kinesis_GetRealValueFromDeviceUnit(int deviceUnits,
+BenchtopBrushless200::Kinesis_GetRealValueFromDeviceUnit(int deviceUnits,
     double* realValue, int unitType) {
 
     STATIC_DLL_FUNC(kinesisDll, BMC_GetRealValueFromDeviceUnit, func);
@@ -217,7 +217,7 @@ BenchtopBrushless::Kinesis_GetRealValueFromDeviceUnit(int deviceUnits,
 
 
 short
-BenchtopBrushless::Kinesis_GetDeviceUnitFromRealValue(double realValue,
+BenchtopBrushless200::Kinesis_GetDeviceUnitFromRealValue(double realValue,
     int* deviceUnits, int unitType) {
 
     STATIC_DLL_FUNC(kinesisDll, BMC_GetDeviceUnitFromRealValue, func);
@@ -226,7 +226,7 @@ BenchtopBrushless::Kinesis_GetDeviceUnitFromRealValue(double realValue,
 
 
 long
-BenchtopBrushless::Kinesis_GetEncoderCounter() {
+BenchtopBrushless200::Kinesis_GetEncoderCounter() {
     STATIC_DLL_FUNC(kinesisDll, BMC_GetEncoderCounter, func);
     return func(CSerialNo(), Channel());
 }

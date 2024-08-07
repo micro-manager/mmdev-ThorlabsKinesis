@@ -1,3 +1,4 @@
+#pragma once
 // Thorlabs Kinesis device adapter for Micro-Manager
 // Author: Mark A. Tsuchida
 //
@@ -35,9 +36,9 @@
 #include "KinesisDevice.h"
 
 
-class BenchtopBrushlessAccess final : public KinesisDeviceAccess {
+class BenchtopBrushless300Access final : public KinesisDeviceAccess {
 public:
-    explicit BenchtopBrushlessAccess(std::string const& serialNo) :
+    explicit BenchtopBrushless300Access(std::string const& serialNo) :
         KinesisDeviceAccess{ serialNo }
     {}
 
@@ -49,9 +50,9 @@ protected:
 };
 
 
-class BenchtopBrushless final : public NonStepperMotorDrive {
+class BenchtopBrushless300 final : public NonStepperMotorDrive {
 public:
-    BenchtopBrushless(std::shared_ptr<KinesisDeviceConnection> connection, short channel) :
+    BenchtopBrushless300(std::shared_ptr<KinesisDeviceConnection> connection, short channel) :
         NonStepperMotorDrive{ connection, channel }
     {}
 

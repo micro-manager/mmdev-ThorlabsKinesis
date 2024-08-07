@@ -19,7 +19,8 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="BenchtopBrushless.h" />
+    <ClInclude Include="BenchtopBrushless200.h" />
+    <ClInclude Include="BenchtopBrushless300.h" />
     <ClInclude Include="BenchtopDCServo.h" />
     <ClInclude Include="BenchtopStepper.h" />
     <ClInclude Include="Connections.h" />
@@ -40,7 +41,8 @@
     <ClInclude Include="VerticalStage.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="BenchtopBrushless.cpp" />
+    <ClCompile Include="BenchtopBrushless200.cpp" />
+    <ClCompile Include="BenchtopBrushless300.cpp" />
     <ClCompile Include="BenchtopDCServo.cpp" />
     <ClCompile Include="BenchtopStepper.cpp" />
     <ClCompile Include="Connection.cpp" />

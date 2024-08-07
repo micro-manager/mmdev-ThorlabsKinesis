@@ -57,10 +57,9 @@ public:
     std::string GetDescription() const;
 };
 
-
 inline bool IsValidSerialNo(std::string const& serialNo) {
-    // 'serialNo' is an exactly 8-character string consisting of digits
-    if (serialNo.size() != 8)
+    // 'serialNo' is an 8 or 9 character string consisting of digits
+    if (serialNo.size() > 9 || serialNo.size() < 8)
         return false;
     for (char d : serialNo) {
         if (d < '0' || d > '9')
@@ -69,13 +68,18 @@ inline bool IsValidSerialNo(std::string const& serialNo) {
     return true;
 }
 
-
 inline uint32_t TypeIDOfSerialNo(std::string const& serialNo) {
     if (!IsValidSerialNo(serialNo))
         return 0;
-    return (serialNo[0] - '0') * 10 + (serialNo[1] - '0');
+    if (serialNo.size() == 8)
+    {
+        return (serialNo[0] - '0') * 10 + (serialNo[1] - '0');
+    }
+    else
+    {
+        return (serialNo[0] - '0') * 100 + (serialNo[1] - '0') * 10 + (serialNo[2] - '0');
+    }
 }
-
 
 enum KinesisDeviceTypeID {
     // Sorted ascii-lexicographically.
@@ -83,7 +87,8 @@ enum KinesisDeviceTypeID {
     //   'doc' - Kinesis C API documentation
     //   'net' - Kinesis .NET API documentation (only indicated if not in 'doc')
     //   'sim' - Kinesis Simulator (only indicated if not in 'doc' or 'net')
-    TypeIDBenchtopBrushless = 73, // doc
+    TypeIDBenchtopBrushless200 = 73, // doc
+    TypeIDBenchtopBrushless300 = 103, // doc
     TypeIDBenchtopDCServo1Channel = 43, // net
     TypeIDBenchtopDCServo3Channel = 79, // net
     TypeIDBenchtopNanotrak = 22, // doc
@@ -129,11 +134,11 @@ enum KinesisDeviceTypeID {
     TypeIDVerticalStage = 24, // doc
 };
 
-
 // Return true if API is multi-channel (even if device is single-channel)
 inline bool IsPotentiallyMultiChannel(std::string const& serialNo) {
     switch (TypeIDOfSerialNo(serialNo)) {
-    case TypeIDBenchtopBrushless:
+    case TypeIDBenchtopBrushless200:
+    case TypeIDBenchtopBrushless300:
     case TypeIDBenchtopDCServo1Channel:
     case TypeIDBenchtopDCServo3Channel:
     case TypeIDBenchtopPiezo1Channel:

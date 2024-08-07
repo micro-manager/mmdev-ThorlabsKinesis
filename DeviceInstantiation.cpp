@@ -57,7 +57,8 @@ MM::Device* MakeDevice(std::string const& name, std::string const& serialNo,
     case TypeIDVerticalStage:
         return new SingleAxisStage{ name, serialNo, -1, connection };
 
-    case TypeIDBenchtopBrushless:
+    case TypeIDBenchtopBrushless200:
+    case TypeIDBenchtopBrushless300:
     case TypeIDBenchtopDCServo1Channel:
     case TypeIDBenchtopDCServo3Channel:
     case TypeIDBenchtopStepper1Channel:
