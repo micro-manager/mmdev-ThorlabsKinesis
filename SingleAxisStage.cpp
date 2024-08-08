@@ -44,6 +44,7 @@
 #include <cmath>
 #include <limits>
 #include <vector>
+#include <map>
 
 namespace {
     char const* const PROP_StageType = "StageType";
@@ -116,29 +117,30 @@ SingleAxisStage::SingleAxisStage(std::string const& name,
     // rotational. (As far as I can tell, *_GetMotorTravelMode() doesn't work
     // as expected.)
 
-    if (supportsStageSelection_)
+    if (supportsAutoDetection_ || supportsStageSelection_)
     {
-        //Read compatible stages from the XML
-        std::vector<std::string> availableStages;
         CreateStringProperty(PROP_StageNameSelection, "DEFAULT", false, nullptr, true);
-
-        int err = KinesisXMLFunctions::getSupportedStages(TypeIDOfSerialNo(serialNo), &availableStages);
-        if (!err)
+        if (supportsAutoDetection_)
         {
-            for (std::string stage : availableStages)
+            AddAllowedValue(PROP_StageNameSelection, "AUTO");
+        }
+
+        if (supportsStageSelection_)
+        {
+            //Read compatible stages from the XML
+            std::vector<std::string> availableStages;
+
+            int err = KinesisXMLFunctions::getSupportedStages(TypeIDOfSerialNo(serialNo), &availableStages);
+            if (!err)
             {
-                AddAllowedValue(PROP_StageNameSelection, stage.c_str());
+                for (std::string stage : availableStages)
+                {
+                    AddAllowedValue(PROP_StageNameSelection, stage.c_str());
+                }
             }
         }
     }
-    if (supportsAutoDetection_)
-    {
-        //Get stage name from controller if possible and load settings to UI
-        CreateStringProperty(PROP_StageNameSelection, "DEFAULT", true, nullptr, true);
-    }
-
-    //If there is not a way to load stage info, the user will need to specify settings
-    if(!supportsAutoDetection_ && !supportsStageSelection_)
+    else //If there is not a way to load stage info, the user will need to specify settings//(!supportsAutoDetection_ && !supportsStageSelection_)
     {
         switch (TypeIDOfSerialNo(serialNo)) {
         case TypeIDCageRotator:
@@ -201,6 +203,34 @@ SingleAxisStage::Initialize() {
     err = motorDrive_->RequestSettings();
     if (err)
         return ERR_OFFSET + err;
+
+    char stageName[MM::MaxStrLength];
+    if (GetProperty(PROP_StageNameSelection, stageName))
+    {
+
+    }
+    if (supportsAutoDetection_ && stageName == std::string{"AUTO"})
+    {
+        err = motorDrive_->LoadSettings();
+        if (err)
+        {
+            //Load settings not supported. Handle
+        }
+
+        std::string actuatorName;
+        err = motorDrive_->GetConnectedActuatorName(&actuatorName);
+        if (err)
+        {
+            //Actuator detection not supported
+        }
+        std::map<int, double> actuatorParams;
+        KinesisXMLFunctions::getStageSettings(actuatorName, &actuatorParams);
+    }
+    if (supportsStageSelection_ && (stageName != std::string{ "AUTO" } || stageName != std::string{ "DEFAULT" }))
+    {
+        std::map<int, double> actuatorParams;
+        KinesisXMLFunctions::getStageSettings(std::string{stageName}, &actuatorParams);
+    }
 
     char stageType[MM::MaxStrLength];
     GetProperty(PROP_StageType, stageType);
