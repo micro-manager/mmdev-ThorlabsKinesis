@@ -57,6 +57,9 @@ class SingleAxisStage final : public CStageBase<SingleAxisStage> {
     bool supportsAutoDetection_{ false };
     bool isRotational_{ false };
     double deviceUnitsPerUm_{ 1.0 }; // Per degree if rotational
+    double motorPitch_{ 1.0 };
+    double motorGearboxRatio_{ 1.0 };
+    double motorStepsPerRev_{1.0};
     int pollingIntervalMs_{ 200 };
     bool didEnable_{ false };
 

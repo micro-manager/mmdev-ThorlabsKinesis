@@ -140,7 +140,7 @@ SingleAxisStage::SingleAxisStage(std::string const& name,
             }
         }
     }
-    else //If there is not a way to load stage info, the user will need to specify settings//(!supportsAutoDetection_ && !supportsStageSelection_)
+    else //If there is not a way to load stage info, the user will need to specify settings
     {
         switch (TypeIDOfSerialNo(serialNo)) {
         case TypeIDCageRotator:
@@ -207,44 +207,70 @@ SingleAxisStage::Initialize() {
     char stageName[MM::MaxStrLength];
     if (GetProperty(PROP_StageNameSelection, stageName))
     {
+        std::map<int, double> actuatorParams;
 
-    }
-    if (supportsAutoDetection_ && stageName == std::string{"AUTO"})
-    {
-        err = motorDrive_->LoadSettings();
-        if (err)
+        //Property is available
+        if (supportsAutoDetection_ && stageName == std::string{"AUTO"})
         {
-            //Load settings not supported. Handle
+            err = motorDrive_->LoadSettings();
+            if (err)
+            {
+                //Load settings not supported. Handle
+            }
+
+            std::string actuatorName;
+            err = motorDrive_->GetConnectedActuatorName(&actuatorName);
+            if (err)
+            {
+                //Actuator detection not supported
+            }
+            KinesisXMLFunctions::getStageSettings(actuatorName, &actuatorParams);
+        }
+        else if (supportsStageSelection_ && (stageName != std::string{ "AUTO" } || stageName != std::string{ "DEFAULT" }))
+        {
+            KinesisXMLFunctions::getStageSettings(std::string{stageName}, &actuatorParams);
         }
 
-        std::string actuatorName;
-        err = motorDrive_->GetConnectedActuatorName(&actuatorName);
-        if (err)
+        std::map<int, double>::iterator it;
+        for (it = actuatorParams.begin(); it != actuatorParams.end(); it++)
         {
-            //Actuator detection not supported
+            switch (it->first)
+            {
+            case SettingsTypeMotorPitch:
+                motorPitch_ = it->second;
+                break;
+            case SettingsTypeMotorGearboxRatio:
+                motorGearboxRatio_ = it->second;
+                break;
+            case SettingsTypeMotorStepsPerRev:
+                motorStepsPerRev_ = it->second;
+                break;
+            case SettingsTypeMotorUnits:
+                isRotational_ = it->second != 1.0;
+                break;
+            default:
+                break;
+            }
         }
-        std::map<int, double> actuatorParams;
-        KinesisXMLFunctions::getStageSettings(actuatorName, &actuatorParams);
+        deviceUnitsPerUm_ = (motorGearboxRatio_ * motorStepsPerRev_ / motorPitch_)/1000;
     }
-    if (supportsStageSelection_ && (stageName != std::string{ "AUTO" } || stageName != std::string{ "DEFAULT" }))
+    else
     {
-        std::map<int, double> actuatorParams;
-        KinesisXMLFunctions::getStageSettings(std::string{stageName}, &actuatorParams);
-    }
+        // if settings are not loaded from file or controller, use property values
+        char stageType[MM::MaxStrLength];
+        GetProperty(PROP_StageType, stageType);
+        isRotational_ = stageType != std::string{ PROPVAL_StageTypeLinear };
 
-    char stageType[MM::MaxStrLength];
-    GetProperty(PROP_StageType, stageType);
-    isRotational_ = stageType != std::string{ PROPVAL_StageTypeLinear };
-
-    if (isRotational_) {
-        double deviceUnitsPerRevolution;
-        GetProperty(PROP_DeviceUnitsPerRevolution, deviceUnitsPerRevolution);
-        deviceUnitsPerUm_ = deviceUnitsPerRevolution / 360.0;
-    }
-    else {
-        double deviceUnitsPerMm;
-        GetProperty(PROP_DeviceUnitsPerMillimeter, deviceUnitsPerMm);
-        deviceUnitsPerUm_ = deviceUnitsPerMm / 1000.0;
+        if (isRotational_) {
+            double deviceUnitsPerRevolution;
+            GetProperty(PROP_DeviceUnitsPerRevolution, deviceUnitsPerRevolution);
+            deviceUnitsPerUm_ = deviceUnitsPerRevolution / 360.0;
+        }
+        else {
+            double deviceUnitsPerMm;
+            GetProperty(PROP_DeviceUnitsPerMillimeter, deviceUnitsPerMm);
+            deviceUnitsPerUm_ = deviceUnitsPerMm / 1000.0;
+        }
     }
 
     // Start polling, which will keep position and status bits up to date.

@@ -158,11 +158,25 @@ void KinesisXMLFunctions::populateSettingsFromBBDDoc(std::string name, tinyxml2:
     {
         return;
     }
+    bool travelUnitsSet = false;
     for (const tinyxml2::XMLElement* record = recordsElement->FirstChildElement("record"); record != nullptr; record = record->NextSiblingElement())
     {
         const tinyxml2::XMLElement* xmlStage = record->FirstChildElement("Stage");
         if (strcmp(name.c_str(), xmlStage->GetText()) == 0)
         {
+            if (travelUnitsSet)
+            {
+                //BBD XML does not contain the definitions for travel units. Setting this here for loading after
+                if (name.find("R") != std::string::npos) //Stage names for rotation BBD stages contain the letter R
+                {
+                    settings->insert(std::pair<int, double>(SettingsTypeMotorUnits, 2.0));
+                }
+                else
+                {
+                    settings->insert(std::pair<int, double>(SettingsTypeMotorUnits, 2.0));
+                }
+                travelUnitsSet = true;
+            }
             const tinyxml2::XMLElement* recordName = record->FirstChildElement("Name");
             if (recordName != nullptr)
             {
