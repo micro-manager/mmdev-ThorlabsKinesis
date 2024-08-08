@@ -78,7 +78,7 @@ bool KinesisXMLFunctions::isNameFoundInDefaultSettings(std::string name, tinyxml
     for (const tinyxml2::XMLElement* deviceSettingsDefinition = deviceSettingsListElement->FirstChildElement(); deviceSettingsDefinition != nullptr; deviceSettingsDefinition = deviceSettingsDefinition->NextSiblingElement())
     {
         const tinyxml2::XMLAttribute* xmlName = deviceSettingsDefinition->FindAttribute("Name");
-        if (name.c_str() == xmlName->Value())
+        if (strcmp(name.c_str(), xmlName->Value()) == 0)
         {
             return true;
         }
@@ -94,10 +94,10 @@ bool KinesisXMLFunctions::isNameFoundInBBDSettings(std::string name, tinyxml2::X
     {
         return false;
     }
-    for (const tinyxml2::XMLElement* record = recordsElement->FirstChildElement(); record != nullptr; record = record->NextSiblingElement())
+    for (const tinyxml2::XMLElement* record = recordsElement->FirstChildElement("record"); record != nullptr; record = record->NextSiblingElement())
     {
-        const tinyxml2::XMLAttribute* xmlName = record->FindAttribute("Stage");
-        if (name.c_str() == xmlName->Value())
+        const tinyxml2::XMLElement* xmlStage = record->FirstChildElement("Stage");
+        if (strcmp(name.c_str(), xmlStage->GetText()) == 0)
         {
             return true;
         }
@@ -115,8 +115,37 @@ void KinesisXMLFunctions::populateSettingsFromDefaultDoc(std::string name, tinyx
     for (const tinyxml2::XMLElement* deviceSettingsDefinition = deviceSettingsListElement->FirstChildElement(); deviceSettingsDefinition != nullptr; deviceSettingsDefinition = deviceSettingsDefinition->NextSiblingElement())
     {
         const tinyxml2::XMLAttribute* xmlName = deviceSettingsDefinition->FindAttribute("Name");
-        if (name.c_str() == xmlName->Value())
+        if (strcmp(name.c_str(), xmlName->Value()) == 0)
         {
+            const tinyxml2::XMLElement* physicalElement = deviceSettingsDefinition->FirstChildElement("Physical");
+            if (physicalElement != nullptr)
+            {
+                const tinyxml2::XMLElement* unitsElement = physicalElement->FirstChildElement("Units");
+                if (unitsElement != nullptr)
+                {
+                    settings->insert(std::pair<int, double>(SettingsTypeMotorUnits, atof(unitsElement->GetText())));
+                }
+
+                const tinyxml2::XMLElement* motorPitchElement = physicalElement->FirstChildElement("Pitch");
+                if (motorPitchElement != nullptr)
+                {
+                    settings->insert(std::pair<int, double>(SettingsTypeMotorPitch, atof(motorPitchElement->GetText())));
+                }
+
+                const tinyxml2::XMLElement* gearboxRationElement = physicalElement->FirstChildElement("GearboxRatio");
+                if (gearboxRationElement != nullptr)
+                {
+                    settings->insert(std::pair<int, double>(SettingsTypeMotorGearboxRatio, atof(gearboxRationElement->GetText())));
+                }
+
+                const tinyxml2::XMLElement* stepsPerRevElement = physicalElement->FirstChildElement("StepsPerRev");
+                if (stepsPerRevElement != nullptr)
+                {
+                    settings->insert(std::pair<int, double>(SettingsTypeMotorStepsPerRev, atof(stepsPerRevElement->GetText())));
+                }
+
+                // Add any additional settings to the map here
+            }
             break;
         }
     }
@@ -129,12 +158,36 @@ void KinesisXMLFunctions::populateSettingsFromBBDDoc(std::string name, tinyxml2:
     {
         return;
     }
-    for (const tinyxml2::XMLElement* record = recordsElement->FirstChildElement(); record != nullptr; record = record->NextSiblingElement())
+    for (const tinyxml2::XMLElement* record = recordsElement->FirstChildElement("record"); record != nullptr; record = record->NextSiblingElement())
     {
-        const tinyxml2::XMLAttribute* xmlName = record->FindAttribute("Stage");
-        if (name.c_str() == xmlName->Value())
+        const tinyxml2::XMLElement* xmlStage = record->FirstChildElement("Stage");
+        if (strcmp(name.c_str(), xmlStage->GetText()) == 0)
         {
-            break;
+            const tinyxml2::XMLElement* recordName = record->FirstChildElement("Name");
+            if (recordName != nullptr)
+            {
+                if (strcmp("Encoder count per unit", recordName->GetText()) == 0)
+                {
+                    const tinyxml2::XMLElement* recordValue = record->FirstChildElement("Data");
+                    if (recordValue != nullptr)
+                    {
+                        settings->insert(std::pair<int, double>(SettingsTypeMotorStepsPerRev, atoi(recordValue->GetText())));
+                    }
+                    
+                }
+                else if(strcmp("Encoder To Step Ratio Counts", recordName->GetText()) == 0)
+                {
+                    const tinyxml2::XMLElement* recordValue = record->FirstChildElement("Data");
+                    if (recordValue != nullptr)
+                    {
+                        settings->insert(std::pair<int, double>(SettingsTypeMotorGearboxRatio, atoi(recordValue->GetText())));
+                    }
+                }
+                else if(strcmp("ADD VALUES THAT NEED TO BE READ", recordName->GetText()) == 0)
+                {
+                    // Add any additional settings to the map here
+                }
+            }
         }
     }
 }
