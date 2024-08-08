@@ -271,6 +271,9 @@ public:
     bool CanHome() { return Kinesis_CanHome(); }
     short Home() { return Kinesis_Home(); }
 
+    short LoadSettings() { return Kinesis_LoadSettings(); }
+    short GetConnectedActuatorName(std::string* actuatorName) { return Kinesis_GetConnectedActuatorName(actuatorName); }
+
     // These conversion functions seem to always return an error (tested with
     // cage rotator K10CR1; Kinesis 1.14.18)
     short DeviceToPhysicalPosition(int deviceUnits, double& physicalUnits) {
@@ -296,6 +299,9 @@ protected:
 
     virtual bool Kinesis_CanHome() = 0;
     virtual short Kinesis_Home() = 0;
+
+    virtual short Kinesis_LoadSettings() { return 1; };
+    virtual short Kinesis_GetConnectedActuatorName(std::string* actuator_name) { actuator_name->append("ERROR"); return 1; };
 
     virtual short Kinesis_GetRealValueFromDeviceUnit(int deviceUnits,
         double* realValue, int unitType) = 0;
