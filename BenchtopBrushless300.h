@@ -86,6 +86,9 @@ protected: // Motor
     bool Kinesis_CanHome() override;
     short Kinesis_Home() override;
 
+    short Kinesis_LoadSettings() override;
+    short Kinesis_GetConnectedActuatorName(std::string* actuator_name) override;
+
     short Kinesis_GetRealValueFromDeviceUnit(int deviceUnits,
         double* realValue, int unitType) override;
     short Kinesis_GetDeviceUnitFromRealValue(double realValue,

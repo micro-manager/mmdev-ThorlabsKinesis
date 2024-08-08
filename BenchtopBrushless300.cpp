@@ -206,6 +206,23 @@ BenchtopBrushless300::Kinesis_Home() {
     return func(CSerialNo(), Channel());
 }
 
+short
+BenchtopBrushless300::Kinesis_LoadSettings()
+{
+    STATIC_DLL_FUNC(kinesisDll, BMC_LoadSettings, func);
+    return func(CSerialNo(), Channel());
+}
+
+short
+BenchtopBrushless300::Kinesis_GetConnectedActuatorName(std::string* actuator_name)
+{
+    MOT_StageAxisParameters paramsBlock;
+    STATIC_DLL_FUNC(kinesisDll, BMC_GetStageAxisParamsBlock, func);
+    auto ret = func(CSerialNo(), Channel(), &paramsBlock);
+
+    actuator_name->append(paramsBlock.partNumber);
+    return ret;
+}
 
 short
 BenchtopBrushless300::Kinesis_GetRealValueFromDeviceUnit(int deviceUnits,
