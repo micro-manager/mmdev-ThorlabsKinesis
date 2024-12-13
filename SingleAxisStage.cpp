@@ -205,7 +205,8 @@ SingleAxisStage::Initialize() {
         return ERR_OFFSET + err;
 
     char stageName[MM::MaxStrLength];
-    if (GetProperty(PROP_StageNameSelection, stageName))
+    GetProperty(PROP_StageNameSelection, stageName);
+    if (strcmp(stageName, "DEFAULT") == 1)
     {
         std::map<int, double> actuatorParams;
 

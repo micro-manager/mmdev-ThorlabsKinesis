@@ -146,6 +146,68 @@ void KinesisXMLFunctions::populateSettingsFromDefaultDoc(std::string name, tinyx
 
                 // Add any additional settings to the map here
             }
+
+            const tinyxml2::XMLElement* homeElement = deviceSettingsDefinition->FirstChildElement("Home");
+            if (homeElement != nullptr)
+            {
+                const tinyxml2::XMLElement* homeDirectionElement = homeElement->FirstChildElement("HomeDir");
+                if (homeDirectionElement != nullptr)
+                {
+                    settings->insert(std::pair<int, double>(SettingsTypeHomeDirection, atof(homeDirectionElement->GetText())));
+                }
+
+                const tinyxml2::XMLElement* homeOffsetElement = homeElement->FirstChildElement("HomeZeroOffset");
+                if (homeOffsetElement != nullptr)
+                {
+                    settings->insert(std::pair<int, double>(SettingsTypeHomeZeroOffset, atof(homeOffsetElement->GetText())));
+                }
+
+                const tinyxml2::XMLElement* homeLimitSwitchElement = homeElement->FirstChildElement("HomeLimitSwitch");
+                if (homeLimitSwitchElement != nullptr)
+                {
+                    settings->insert(std::pair<int, double>(SettingsTypeHomeLimitSwitch, atof(homeLimitSwitchElement->GetText())));
+                }
+
+                const tinyxml2::XMLElement* homeVelocity = homeElement->FirstChildElement("HomeVel");
+                if (homeVelocity != nullptr)
+                {
+                    settings->insert(std::pair<int, double>(SettingsTypeHomeVelocity, atof(homeVelocity->GetText())));
+                }
+            }
+
+            const tinyxml2::XMLElement* limitsElement = deviceSettingsDefinition->FirstChildElement("Limits");
+            if (limitsElement != nullptr)
+            {
+                const tinyxml2::XMLElement* cwHardLimitElement = limitsElement->FirstChildElement("CWHardLimit");
+                if (cwHardLimitElement != nullptr)
+                {
+                    settings->insert(std::pair<int, double>(SettingsTypeLimitCWHardLimit, atof(cwHardLimitElement->GetText())));
+                }
+
+                const tinyxml2::XMLElement* ccwHardLimitElement = limitsElement->FirstChildElement("CCWHardLimit");
+                if (ccwHardLimitElement != nullptr)
+                {
+                    settings->insert(std::pair<int, double>(SettingsTypeLimitCCWHardLimit, atof(ccwHardLimitElement->GetText())));
+                }
+
+                const tinyxml2::XMLElement* cwSoftLimitElement = limitsElement->FirstChildElement("CWSoftLimit");
+                if (cwSoftLimitElement != nullptr)
+                {
+                    settings->insert(std::pair<int, double>(SettingsTypeLimitCWSoftLimit, atof(cwSoftLimitElement->GetText())));
+                }
+
+                const tinyxml2::XMLElement* ccwSoftLimitElement = limitsElement->FirstChildElement("CCWSoftLimit");
+                if (ccwSoftLimitElement != nullptr)
+                {
+                    settings->insert(std::pair<int, double>(SettingsTypeLimitCCWSoftLimit, atof(ccwSoftLimitElement->GetText())));
+                }
+
+                const tinyxml2::XMLElement* softLimitModeElement = limitsElement->FirstChildElement("SoftLimitMode");
+                if (softLimitModeElement != nullptr)
+                {
+                    settings->insert(std::pair<int, double>(SettingsTypeLimitSoftLimitMode, atof(softLimitModeElement->GetText())));
+                }
+            }
             break;
         }
     }
