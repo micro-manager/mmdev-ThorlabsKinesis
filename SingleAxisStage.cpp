@@ -232,6 +232,11 @@ SingleAxisStage::Initialize() {
             KinesisXMLFunctions::getStageSettings(std::string{stageName}, &actuatorParams);
         }
 
+        MOT_HomingParameters homeParams;
+        bool hasHomeParams = false;
+        MOT_LimitSwitchParameters limitParams;
+        bool hasLimitParams = false;
+
         std::map<int, double>::iterator it;
         for (it = actuatorParams.begin(); it != actuatorParams.end(); it++)
         {
@@ -249,11 +254,48 @@ SingleAxisStage::Initialize() {
             case SettingsTypeMotorUnits:
                 isRotational_ = it->second != 1.0;
                 break;
+            case SettingsTypeHomeDirection:
+                homeParams.direction = it->second;
+                hasHomeParams = true;
+                break;
+            case SettingsTypeHomeLimitSwitch:
+                homeParams.limitSwitch = it->second;
+                break;
+            case SettingsTypeHomeVelocity:
+                homeParams.velocity = it->second;
+                break;
+            case SettingsTypeHomeZeroOffset:
+                homeParams.offsetDistance = it->second;
+                break;
+            case SettingsTypeLimitCCWHardLimit:
+                limitParams.ccwHardwareLimitMode = it->second;
+                hasLimitParams = true;
+                break;
+            case SettingsTypeLimitCWHardLimit:
+                limitParams.cwHardwareLimitMode = it->second;
+                break;
+            case SettingsTypeLimitCCWSoftLimit:
+                limitParams.ccwSoftwareLimitPosition = it->second;
+                break;
+            case SettingsTypeLimitCWSoftLimit:
+                limitParams.cwSoftwareLimitPosition = it->second;
+                break;
+            case SettingsTypeLimitSoftLimitMode:
+                limitParams.softwareLimitMode = it->second;
+                break;
             default:
                 break;
             }
         }
         deviceUnitsPerUm_ = (motorGearboxRatio_ * motorStepsPerRev_ / motorPitch_)/1000;
+        if (hasHomeParams)
+        {
+            motorDrive_->SetHomingParameters(homeParams.direction, homeParams.limitSwitch, homeParams.offsetDistance*deviceUnitsPerUm_*1000, homeParams.velocity * deviceUnitsPerUm_ * 1000);
+        }
+        if (hasLimitParams)
+        {
+            motorDrive_->SetLimitSwitchParameters(limitParams.ccwHardwareLimitMode, limitParams.ccwSoftwareLimitPosition, limitParams.cwHardwareLimitMode, limitParams.cwSoftwareLimitPosition, limitParams.softwareLimitMode);
+        }
     }
     else
     {

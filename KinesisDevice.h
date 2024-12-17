@@ -162,7 +162,7 @@ public:
 
     std::string GetModelNo();
 
-    DWORD GetStatusBits() { return Kinesis_GetStatusBits(); }
+    int GetStatusBits() { return Kinesis_GetStatusBits(); }
 
 protected: // 1:1 wrappers for Kinesis API functions
     virtual short Kinesis_RequestSettings() = 0;
@@ -263,6 +263,18 @@ public:
         return Kinesis_SetRotationModes(mode, direction);
     }
 
+    short SetHomingParameters(int direction, int limitSwitchMode, int offsetDistance, int velocity)
+    {
+        return Kinesis_SetHomingParams(direction, limitSwitchMode, offsetDistance, velocity);
+    }
+
+    short SetLimitSwitchParameters(int ccwHardwareLimitMode, int ccwSoftwareLimitPosition,
+        int cwHardwareLimitMode, int cwSoftwareLimitPosition, int softwareLimitMode)
+    {
+        return Kinesis_SetLimitSwitchParams(ccwHardwareLimitMode, ccwSoftwareLimitPosition,
+            cwHardwareLimitMode, cwSoftwareLimitPosition, softwareLimitMode);
+    }
+
     short RequestPosition() { return Kinesis_RequestPosition(); }
     int GetPosition() { return Kinesis_GetPosition(); }
     long GetPositionCounter() { return Kinesis_GetPositionCounter(); }
@@ -291,6 +303,13 @@ protected:
     virtual short Kinesis_SetMotorTravelMode(int mode) = 0;
     virtual short Kinesis_ResetRotationModes() = 0;
     virtual short Kinesis_SetRotationModes(int mode, int direction) = 0;
+
+    virtual short Kinesis_SetHomingParams(int direction, int limitSwitchMode, int offsetDistance, int velocity) = 0;
+    //virtual short Kinesis_GetHomingParams(int* direction, int* limitSwitchMode, int* offsetDistance, int* velocity) = 0;
+
+    virtual short Kinesis_SetLimitSwitchParams(int ccwHardwareLimitMode, int ccwSoftwareLimitPosition, 
+        int cwHardwareLimitMode, int cwSoftwareLimitPosition, int softwareLimitMode) = 0;
+    //virtual short Kinesis_SetLimitSwitchParams(int* ccwHardwareLimitMode, int* ccwSoftwareLimitPosition, int* cwHardwareLimitMode, int* cwSoftwareLimitPosition, int* softwareLimitMode) = 0;
 
     virtual short Kinesis_RequestPosition() = 0;
     virtual int Kinesis_GetPosition() = 0;

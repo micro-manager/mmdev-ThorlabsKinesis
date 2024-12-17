@@ -150,6 +150,27 @@ KCubeStepper::Kinesis_SetRotationModes(int mode, int direction) {
         static_cast<MOT_MovementDirections>(direction));
 }
 
+short
+KCubeStepper::Kinesis_SetHomingParams(int direction, int limitSwitchMode, int offsetDistance, int velocity)
+{
+    STATIC_DLL_FUNC(kinesisDll, SCC_SetHomingParamsBlock, func);
+    MOT_HomingParameters params;
+    params.direction = (MOT_TravelDirection)direction;
+    params.limitSwitch = (MOT_HomeLimitSwitchDirection)limitSwitchMode;
+    params.offsetDistance = offsetDistance;
+    params.velocity = velocity;
+
+    return func(CSerialNo(), &params);
+}
+
+short
+KCubeStepper::Kinesis_SetLimitSwitchParams(int ccwHardwareLimitMode, int ccwSoftwareLimitPosition,
+    int cwHardwareLimitMode, int cwSoftwareLimitPosition, int softwareLimitMode)
+{
+    STATIC_DLL_FUNC(kinesisDll, SCC_SetLimitSwitchParams, func);
+    return func(CSerialNo(), (MOT_LimitSwitchModes)cwHardwareLimitMode, (MOT_LimitSwitchModes)ccwHardwareLimitMode, cwSoftwareLimitPosition, ccwSoftwareLimitPosition, (MOT_LimitSwitchSWModes)softwareLimitMode);
+}
+
 
 short
 KCubeStepper::Kinesis_RequestPosition() {
