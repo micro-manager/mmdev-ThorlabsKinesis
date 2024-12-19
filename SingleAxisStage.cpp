@@ -119,7 +119,9 @@ SingleAxisStage::SingleAxisStage(std::string const& name,
     // In general, the user must tell us whether the stage is linear or
     // rotational. (As far as I can tell, *_GetMotorTravelMode() doesn't work
     // as expected.)
-    CreateStringProperty(PROP_StageNameSelection, "CUSTOM", false, nullptr, true);
+    auto* pActEx = new CPropertyAction(this, &SingleAxisStage::OnStageNameChange);
+    CreateStringProperty(PROP_StageNameSelection, selectedStageName_.c_str(), false, pActEx, true);
+    AddAllowedValue(PROP_StageNameSelection, "CUSTOM");
 
     //Properties for motor params
     CreateFloatProperty(PROP_MotorPitch, 1, false, nullptr, true);
@@ -166,6 +168,8 @@ SingleAxisStage::SingleAxisStage(std::string const& name,
     // The defaults below are set to small values to prevent accidents. Known
     // defaults (taken from the Kinesis app) are given for integrated devices.
 
+    //Changed to read-only 
+    //TODO: Check if old config files need to have properties in adapter to function properly
     double defaultDeviceUnitsPerMm = 1.0;
     switch (TypeIDOfSerialNo(serialNo)) {
     case TypeIDLabJack050: defaultDeviceUnitsPerMm = 1228800.0; break;
@@ -176,17 +180,14 @@ SingleAxisStage::SingleAxisStage(std::string const& name,
     CreateFloatProperty(PROP_DeviceUnitsPerMillimeter,
         defaultDeviceUnitsPerMm, true, nullptr, true);
 
-    if (isRotational_)
-    {
-        double defaultDeviceUnitsPerRevolution = 360.0;
-        switch (TypeIDOfSerialNo(serialNo)) {
-        case TypeIDCageRotator:
-            defaultDeviceUnitsPerRevolution = 49152000.0;
-            break;
-        }
-        CreateFloatProperty(PROP_DeviceUnitsPerRevolution,
-            defaultDeviceUnitsPerRevolution, false, nullptr, true);
+    double defaultDeviceUnitsPerRevolution = 360.0;
+    switch (TypeIDOfSerialNo(serialNo)) {
+    case TypeIDCageRotator:
+        defaultDeviceUnitsPerRevolution = 49152000.0;
+        break;
     }
+    CreateFloatProperty(PROP_DeviceUnitsPerRevolution,
+        defaultDeviceUnitsPerRevolution, true, nullptr, true);
 
 }
 
@@ -231,10 +232,11 @@ SingleAxisStage::Initialize() {
             if (err)
             {
                 //Actuator detection not supported
+                LogMessage(("Filed to detect actuator for serial number:  " + serialNo_).c_str());
             }
             KinesisXMLFunctions::getStageSettings(actuatorName, &actuatorParams);
         }
-        else if (supportsStageSelection_ && (stageName != std::string{ "AUTO" } || stageName != std::string{ "CUSTOM" }))
+        else if (supportsStageSelection_ && (stageName != std::string{ "AUTO" }))
         {
             KinesisXMLFunctions::getStageSettings(std::string{stageName}, &actuatorParams);
         }
@@ -306,6 +308,19 @@ SingleAxisStage::Initialize() {
     }
     else if (strcmp(stageName, "CUSTOM") == 0)
     {
+        long stepsPerRev = 0;
+        long gearboxRatio = 0;
+        long motorPitch = 0;
+
+        GetProperty(PROP_MotorStepsPerRev, stepsPerRev);
+        GetProperty(PROP_MotorGearboxRatio, gearboxRatio);
+        GetProperty(PROP_MotorPitch, motorPitch);
+
+        motorGearboxRatio_ = gearboxRatio;
+        motorStepsPerRev_ = stepsPerRev;
+        motorPitch_ = motorPitch;
+
+        deviceUnitsPerUm_ = (motorGearboxRatio_ * motorStepsPerRev_ / motorPitch_) / 1000;
     }
     else
     {
@@ -522,4 +537,55 @@ SingleAxisStage::MakeName(MotorDrive* motorDrive) const {
     }
 
     return name;
+}
+
+int 
+SingleAxisStage::OnStageNameChange(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+    if (eAct == MM::BeforeGet)
+    {
+    }
+    else if (eAct == MM::AfterSet)
+    {
+        std::string userSelection;
+
+        char buf[MM::MaxStrLength];
+        (void)GetProperty(PROP_StageNameSelection, buf);
+        userSelection = std::string(buf);
+
+        selectedStageName_ = userSelection;
+
+        if (selectedStageName_.compare("CUSTOM") != 0 && selectedStageName_.compare("AUTO") != 0)
+        {
+            std::map<int, double> actuatorParams;
+            KinesisXMLFunctions::getStageSettings(selectedStageName_, &actuatorParams);
+
+            std::map<int, double>::iterator it;
+            for (it = actuatorParams.begin(); it != actuatorParams.end(); it++)
+            {
+                switch (it->first)
+                {
+                case SettingsTypeMotorPitch:
+                    motorPitch_ = it->second;
+                    break;
+                case SettingsTypeMotorGearboxRatio:
+                    motorGearboxRatio_ = it->second;
+                    break;
+                case SettingsTypeMotorStepsPerRev:
+                    motorStepsPerRev_ = it->second;
+                    break;
+                case SettingsTypeMotorUnits:
+                    isRotational_ = it->second != 1.0;
+                    break;
+                default:
+                    break;
+                }
+            }
+
+            SetProperty(PROP_MotorGearboxRatio, std::to_string(motorGearboxRatio_).c_str());
+            SetProperty(PROP_MotorStepsPerRev, std::to_string(motorStepsPerRev_).c_str());
+            SetProperty(PROP_MotorPitch, std::to_string(motorPitch_).c_str());
+        }
+    }
+    return DEVICE_OK;
 }

@@ -53,6 +53,7 @@ class SingleAxisStage final : public CStageBase<SingleAxisStage> {
 
     // Set during Initialize():
     std::unique_ptr<MotorDrive> motorDrive_;
+    std::string selectedStageName_ = "CUSTOM";
     bool supportsStageSelection_{ false };
     bool supportsAutoDetection_{ false };
     bool isRotational_{ false };
@@ -101,6 +102,8 @@ public:
     int SetOrigin() override { return DEVICE_UNSUPPORTED_COMMAND; }
     int GetLimits(double&, double&) override { return DEVICE_UNSUPPORTED_COMMAND; }
     int Home();
+
+    int OnStageNameChange(MM::PropertyBase* pProp, MM::ActionType eAct);
 
     bool IsContinuousFocusDrive() const override { return false; }
     int IsStageSequenceable(bool& f) const override { f = false; return DEVICE_OK; }
