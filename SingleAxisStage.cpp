@@ -52,6 +52,9 @@ namespace {
     char const* const PROPVAL_StageTypeRotational = "Rotational";
     char const* const PROP_DeviceUnitsPerMillimeter = "DeviceUnitsPerMillimeter";
     char const* const PROP_DeviceUnitsPerRevolution = "DeviceUnitsPerRevolution";
+    char const* const PROP_MotorPitch = "MotorPitch";
+    char const* const PROP_MotorStepsPerRev = "MotorStepsPerRevolution";
+    char const* const PROP_MotorGearboxRatio = "MotorGearboxRatio";
     char const* const PROP_StageNameSelection = "StagePartNumber";
 }
 
@@ -116,62 +119,65 @@ SingleAxisStage::SingleAxisStage(std::string const& name,
     // In general, the user must tell us whether the stage is linear or
     // rotational. (As far as I can tell, *_GetMotorTravelMode() doesn't work
     // as expected.)
+    CreateStringProperty(PROP_StageNameSelection, "CUSTOM", false, nullptr, true);
 
-    if (supportsAutoDetection_ || supportsStageSelection_)
+    //Properties for motor params
+    CreateFloatProperty(PROP_MotorPitch, 1, false, nullptr, true);
+    CreateFloatProperty(PROP_MotorStepsPerRev, 1, false, nullptr, true);
+    CreateFloatProperty(PROP_MotorGearboxRatio, 1, false, nullptr, true);
+
+    if (supportsAutoDetection_)
     {
-        CreateStringProperty(PROP_StageNameSelection, "DEFAULT", false, nullptr, true);
-        if (supportsAutoDetection_)
-        {
-            AddAllowedValue(PROP_StageNameSelection, "AUTO");
-        }
+        AddAllowedValue(PROP_StageNameSelection, "AUTO");
+    }
 
-        if (supportsStageSelection_)
-        {
-            //Read compatible stages from the XML
-            std::vector<std::string> availableStages;
+    if (supportsStageSelection_)
+    {
+        //Read compatible stages from the XML
+        std::vector<std::string> availableStages;
 
-            int err = KinesisXMLFunctions::getSupportedStages(TypeIDOfSerialNo(serialNo), &availableStages);
-            if (!err)
+        int err = KinesisXMLFunctions::getSupportedStages(TypeIDOfSerialNo(serialNo), &availableStages);
+        if (!err)
+        {
+            for (std::string stage : availableStages)
             {
-                for (std::string stage : availableStages)
-                {
-                    AddAllowedValue(PROP_StageNameSelection, stage.c_str());
-                }
+                AddAllowedValue(PROP_StageNameSelection, stage.c_str());
             }
         }
     }
-    else //If there is not a way to load stage info, the user will need to specify settings
+
+    switch (TypeIDOfSerialNo(serialNo)) {
+    case TypeIDCageRotator:
+        isRotational_ = true;
+        break;
+    }
+    CreateStringProperty(PROP_StageType,
+        isRotational_ ? PROPVAL_StageTypeRotational : PROPVAL_StageTypeLinear,
+        false, nullptr, true);
+    AddAllowedValue(PROP_StageType, PROPVAL_StageTypeLinear);
+    AddAllowedValue(PROP_StageType, PROPVAL_StageTypeRotational);
+
+    // In general, the user must tell us how to convert from physical to device
+    // units. (As far as I can tell, there is no API to query the actuator lead
+    // screw pitch, or even the device units per motor revolution (device units
+    // are not equal to "steps"). And *_GetRealValueFromDeviceUnit() and
+    // *_GetDeviceUnitFromRealValue() seem to always return an error.)
+
+    // The defaults below are set to small values to prevent accidents. Known
+    // defaults (taken from the Kinesis app) are given for integrated devices.
+
+    double defaultDeviceUnitsPerMm = 1.0;
+    switch (TypeIDOfSerialNo(serialNo)) {
+    case TypeIDLabJack050: defaultDeviceUnitsPerMm = 1228800.0; break;
+    case TypeIDLabJack490: defaultDeviceUnitsPerMm = 134737.0; break;
+    case TypeIDLongTravelStage: defaultDeviceUnitsPerMm = 409600.0; break;
+    case TypeIDVerticalStage: defaultDeviceUnitsPerMm = 25050.0; break;
+    }
+    CreateFloatProperty(PROP_DeviceUnitsPerMillimeter,
+        defaultDeviceUnitsPerMm, true, nullptr, true);
+
+    if (isRotational_)
     {
-        switch (TypeIDOfSerialNo(serialNo)) {
-        case TypeIDCageRotator:
-            isRotational_ = true;
-            break;
-        }
-        CreateStringProperty(PROP_StageType,
-            isRotational_ ? PROPVAL_StageTypeRotational : PROPVAL_StageTypeLinear,
-            false, nullptr, true);
-        AddAllowedValue(PROP_StageType, PROPVAL_StageTypeLinear);
-        AddAllowedValue(PROP_StageType, PROPVAL_StageTypeRotational);
-
-        // In general, the user must tell us how to convert from physical to device
-        // units. (As far as I can tell, there is no API to query the actuator lead
-        // screw pitch, or even the device units per motor revolution (device units
-        // are not equal to "steps"). And *_GetRealValueFromDeviceUnit() and
-        // *_GetDeviceUnitFromRealValue() seem to always return an error.)
-
-        // The defaults below are set to small values to prevent accidents. Known
-        // defaults (taken from the Kinesis app) are given for integrated devices.
-
-        double defaultDeviceUnitsPerMm = 1.0;
-        switch (TypeIDOfSerialNo(serialNo)) {
-        case TypeIDLabJack050: defaultDeviceUnitsPerMm = 1228800.0; break;
-        case TypeIDLabJack490: defaultDeviceUnitsPerMm = 134737.0; break;
-        case TypeIDLongTravelStage: defaultDeviceUnitsPerMm = 409600.0; break;
-        case TypeIDVerticalStage: defaultDeviceUnitsPerMm = 25050.0; break;
-        }
-        CreateFloatProperty(PROP_DeviceUnitsPerMillimeter,
-            defaultDeviceUnitsPerMm, false, nullptr, true);
-
         double defaultDeviceUnitsPerRevolution = 360.0;
         switch (TypeIDOfSerialNo(serialNo)) {
         case TypeIDCageRotator:
@@ -181,6 +187,7 @@ SingleAxisStage::SingleAxisStage(std::string const& name,
         CreateFloatProperty(PROP_DeviceUnitsPerRevolution,
             defaultDeviceUnitsPerRevolution, false, nullptr, true);
     }
+
 }
 
 
@@ -206,7 +213,7 @@ SingleAxisStage::Initialize() {
 
     char stageName[MM::MaxStrLength];
     GetProperty(PROP_StageNameSelection, stageName);
-    if (strcmp(stageName, "DEFAULT") == 0 || strcmp(stageName, "AUTO") == 0)
+    if (strcmp(stageName, "CUSTOM") != 0)
     {
         std::map<int, double> actuatorParams;
 
@@ -216,7 +223,7 @@ SingleAxisStage::Initialize() {
             err = motorDrive_->LoadSettings();
             if (err)
             {
-                //Load settings not supported. Handle
+                //Load settings not supported. Might not need to handle depending on device. Needs further testing
             }
 
             std::string actuatorName;
@@ -227,7 +234,7 @@ SingleAxisStage::Initialize() {
             }
             KinesisXMLFunctions::getStageSettings(actuatorName, &actuatorParams);
         }
-        else if (supportsStageSelection_ && (stageName != std::string{ "AUTO" } || stageName != std::string{ "DEFAULT" }))
+        else if (supportsStageSelection_ && (stageName != std::string{ "AUTO" } || stageName != std::string{ "CUSTOM" }))
         {
             KinesisXMLFunctions::getStageSettings(std::string{stageName}, &actuatorParams);
         }
@@ -297,8 +304,12 @@ SingleAxisStage::Initialize() {
             motorDrive_->SetLimitSwitchParameters(limitParams.ccwHardwareLimitMode, limitParams.ccwSoftwareLimitPosition, limitParams.cwHardwareLimitMode, limitParams.cwSoftwareLimitPosition, limitParams.softwareLimitMode);
         }
     }
+    else if (strcmp(stageName, "CUSTOM") == 0)
+    {
+    }
     else
     {
+        //Error case. Should ony ever hit one of the above cases
         // if settings are not loaded from file or controller, use property values
         char stageType[MM::MaxStrLength];
         GetProperty(PROP_StageType, stageType);
