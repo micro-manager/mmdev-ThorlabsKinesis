@@ -181,7 +181,7 @@ SingleAxisStage::SingleAxisStage(std::string const& name,
     case TypeIDVerticalStage: defaultDeviceUnitsPerMm = 25050.0; break;
     }
     CreateFloatProperty(PROP_DeviceUnitsPerMillimeter,
-        defaultDeviceUnitsPerMm, true, nullptr, true);
+        defaultDeviceUnitsPerMm, false, nullptr, true);
 
     double defaultDeviceUnitsPerRevolution = 360.0;
     switch (TypeIDOfSerialNo(serialNo)) {
@@ -190,7 +190,7 @@ SingleAxisStage::SingleAxisStage(std::string const& name,
         break;
     }
     CreateFloatProperty(PROP_DeviceUnitsPerRevolution,
-        defaultDeviceUnitsPerRevolution, true, nullptr, true);
+        defaultDeviceUnitsPerRevolution, false, nullptr, true);
 
 }
 
