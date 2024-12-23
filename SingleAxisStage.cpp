@@ -596,6 +596,10 @@ SingleAxisStage::OnStageNameChange(MM::PropertyBase* pProp, MM::ActionType eAct)
             SetProperty(PROP_MotorStepsPerRev, std::to_string(motorStepsPerRev_).c_str());
             SetProperty(PROP_MotorPitch, std::to_string(motorPitch_).c_str());
             SetProperty(PROP_StageType, isRotational_ ? PROPVAL_StageTypeRotational : PROPVAL_StageTypeLinear);
+
+            deviceUnitsPerUm_ = (motorGearboxRatio_ * motorStepsPerRev_ / motorPitch_) / 1000;
+            SetProperty(PROP_DeviceUnitsPerMillimeter, std::to_string(deviceUnitsPerUm_ * 1000).c_str());
+            SetProperty(PROP_DeviceUnitsPerRevolution, std::to_string(deviceUnitsPerUm_ * 360).c_str());
         }
     }
     return DEVICE_OK;
