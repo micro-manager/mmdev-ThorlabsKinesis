@@ -56,6 +56,8 @@ namespace {
     char const* const PROP_MotorStepsPerRev = "MotorStepsPerRevolution";
     char const* const PROP_MotorGearboxRatio = "MotorGearboxRatio";
     char const* const PROP_StageNameSelection = "StagePartNumber";
+    char const* const PROPVAL_StageNameAuto = "AUTO";
+    char const* const PROPVAL_StageNameCustom = "CUSTOM";
 }
 
 //Show pre-init properties for all selection modes
@@ -121,7 +123,7 @@ SingleAxisStage::SingleAxisStage(std::string const& name,
     // as expected.)
     auto* pActEx = new CPropertyAction(this, &SingleAxisStage::OnStageNameChange);
     CreateStringProperty(PROP_StageNameSelection, selectedStageName_.c_str(), false, pActEx, true);
-    AddAllowedValue(PROP_StageNameSelection, "CUSTOM");
+    AddAllowedValue(PROP_StageNameSelection, PROPVAL_StageNameCustom);
 
     //Properties for motor params
     CreateFloatProperty(PROP_MotorPitch, 1, false, nullptr, true);
@@ -130,7 +132,7 @@ SingleAxisStage::SingleAxisStage(std::string const& name,
 
     if (supportsAutoDetection_)
     {
-        AddAllowedValue(PROP_StageNameSelection, "AUTO");
+        AddAllowedValue(PROP_StageNameSelection, PROPVAL_StageNameAuto);
     }
 
     if (supportsStageSelection_)
@@ -214,12 +216,12 @@ SingleAxisStage::Initialize() {
 
     char stageName[MM::MaxStrLength];
     GetProperty(PROP_StageNameSelection, stageName);
-    if (strcmp(stageName, "CUSTOM") != 0)
+    if (strcmp(stageName, PROPVAL_StageNameCustom) != 0)
     {
         std::map<int, double> actuatorParams;
 
         //Property is available
-        if (supportsAutoDetection_ && stageName == std::string{"AUTO"})
+        if (supportsAutoDetection_ && stageName == std::string{PROPVAL_StageNameAuto})
         {
             err = motorDrive_->LoadSettings();
             if (err)
@@ -236,7 +238,7 @@ SingleAxisStage::Initialize() {
             }
             KinesisXMLFunctions::getStageSettings(actuatorName, &actuatorParams);
         }
-        else if (supportsStageSelection_ && (stageName != std::string{ "AUTO" }))
+        else if (supportsStageSelection_ && (stageName != std::string{ PROPVAL_StageNameAuto }))
         {
             KinesisXMLFunctions::getStageSettings(std::string{stageName}, &actuatorParams);
         }
@@ -297,6 +299,11 @@ SingleAxisStage::Initialize() {
             }
         }
         deviceUnitsPerUm_ = (motorGearboxRatio_ * motorStepsPerRev_ / motorPitch_)/1000;
+
+        SetProperty(PROP_DeviceUnitsPerMillimeter, std::to_string(deviceUnitsPerUm_ * 1000).c_str());
+        SetProperty(PROP_DeviceUnitsPerRevolution, std::to_string(deviceUnitsPerUm_ * 360).c_str());
+        SetProperty(PROP_StageType, isRotational_ ? PROPVAL_StageTypeRotational : PROPVAL_StageTypeLinear);
+
         if (hasHomeParams)
         {
             motorDrive_->SetHomingParameters(homeParams.direction, homeParams.limitSwitch, homeParams.offsetDistance*deviceUnitsPerUm_*1000, homeParams.velocity * deviceUnitsPerUm_ * 1000);
@@ -306,7 +313,7 @@ SingleAxisStage::Initialize() {
             motorDrive_->SetLimitSwitchParameters(limitParams.ccwHardwareLimitMode, limitParams.ccwSoftwareLimitPosition, limitParams.cwHardwareLimitMode, limitParams.cwSoftwareLimitPosition, limitParams.softwareLimitMode);
         }
     }
-    else if (strcmp(stageName, "CUSTOM") == 0)
+    else if (strcmp(stageName, PROPVAL_StageNameCustom) == 0)
     {
         long stepsPerRev = 0;
         long gearboxRatio = 0;
@@ -321,6 +328,9 @@ SingleAxisStage::Initialize() {
         motorPitch_ = motorPitch;
 
         deviceUnitsPerUm_ = (motorGearboxRatio_ * motorStepsPerRev_ / motorPitch_) / 1000;
+
+        SetProperty(PROP_DeviceUnitsPerMillimeter, std::to_string(deviceUnitsPerUm_*1000).c_str());
+        SetProperty(PROP_DeviceUnitsPerRevolution, std::to_string(deviceUnitsPerUm_*360).c_str());
     }
     else
     {
@@ -547,15 +557,15 @@ SingleAxisStage::OnStageNameChange(MM::PropertyBase* pProp, MM::ActionType eAct)
     }
     else if (eAct == MM::AfterSet)
     {
-        std::string userSelection;
+        //Allows for the stage selection to update the displayed pre-init properties. 
+        //Can be useful for making adjustments to existing profiles when switching back to custom input
 
         char buf[MM::MaxStrLength];
         (void)GetProperty(PROP_StageNameSelection, buf);
-        userSelection = std::string(buf);
 
-        selectedStageName_ = userSelection;
+        selectedStageName_ = std::string(buf);
 
-        if (selectedStageName_.compare("CUSTOM") != 0 && selectedStageName_.compare("AUTO") != 0)
+        if (selectedStageName_.compare(PROPVAL_StageNameCustom) != 0 && selectedStageName_.compare(PROPVAL_StageNameAuto) != 0)
         {
             std::map<int, double> actuatorParams;
             KinesisXMLFunctions::getStageSettings(selectedStageName_, &actuatorParams);
@@ -585,6 +595,7 @@ SingleAxisStage::OnStageNameChange(MM::PropertyBase* pProp, MM::ActionType eAct)
             SetProperty(PROP_MotorGearboxRatio, std::to_string(motorGearboxRatio_).c_str());
             SetProperty(PROP_MotorStepsPerRev, std::to_string(motorStepsPerRev_).c_str());
             SetProperty(PROP_MotorPitch, std::to_string(motorPitch_).c_str());
+            SetProperty(PROP_StageType, isRotational_ ? PROPVAL_StageTypeRotational : PROPVAL_StageTypeLinear);
         }
     }
     return DEVICE_OK;
