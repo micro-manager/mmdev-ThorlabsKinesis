@@ -171,8 +171,6 @@ SingleAxisStage::SingleAxisStage(std::string const& name,
     // The defaults below are set to small values to prevent accidents. Known
     // defaults (taken from the Kinesis app) are given for integrated devices.
 
-    //Changed to read-only 
-    //TODO: Check if old config files need to have properties in adapter to function properly
     double defaultDeviceUnitsPerMm = 1.0;
     switch (TypeIDOfSerialNo(serialNo)) {
     case TypeIDLabJack050: defaultDeviceUnitsPerMm = 1228800.0; break;
