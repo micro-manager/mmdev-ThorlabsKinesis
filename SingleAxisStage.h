@@ -53,7 +53,7 @@ class SingleAxisStage final : public CStageBase<SingleAxisStage> {
 
     // Set during Initialize():
     std::unique_ptr<MotorDrive> motorDrive_;
-    std::string selectedStageName_ = "CUSTOM";
+    std::string selectedStageName_ = "SELECT";
     bool supportsStageSelection_{ false };
     bool supportsAutoDetection_{ false };
     bool isRotational_{ false };

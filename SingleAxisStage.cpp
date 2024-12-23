@@ -56,6 +56,7 @@ namespace {
     char const* const PROP_MotorStepsPerRev = "MotorStepsPerRevolution";
     char const* const PROP_MotorGearboxRatio = "MotorGearboxRatio";
     char const* const PROP_StageNameSelection = "StagePartNumber";
+    char const* const PROPVAL_StageNameDEFAULT = "SELECT";
     char const* const PROPVAL_StageNameAuto = "AUTO";
     char const* const PROPVAL_StageNameCustom = "CUSTOM";
 }
@@ -122,7 +123,7 @@ SingleAxisStage::SingleAxisStage(std::string const& name,
     // rotational. (As far as I can tell, *_GetMotorTravelMode() doesn't work
     // as expected.)
     auto* pActEx = new CPropertyAction(this, &SingleAxisStage::OnStageNameChange);
-    CreateStringProperty(PROP_StageNameSelection, selectedStageName_.c_str(), false, pActEx, true);
+    CreateStringProperty(PROP_StageNameSelection, PROPVAL_StageNameDEFAULT, false, pActEx, true);
     AddAllowedValue(PROP_StageNameSelection, PROPVAL_StageNameCustom);
 
     //Properties for motor params
@@ -216,7 +217,7 @@ SingleAxisStage::Initialize() {
 
     char stageName[MM::MaxStrLength];
     GetProperty(PROP_StageNameSelection, stageName);
-    if (strcmp(stageName, PROPVAL_StageNameCustom) != 0)
+    if (strcmp(stageName, PROPVAL_StageNameCustom) != 0 && strcmp(stageName, PROPVAL_StageNameDEFAULT) != 0)
     {
         std::map<int, double> actuatorParams;
 
@@ -335,6 +336,7 @@ SingleAxisStage::Initialize() {
     else
     {
         //Error case. Should ony ever hit one of the above cases
+        // Should be hit if using a legacy config file. 
         // if settings are not loaded from file or controller, use property values
         char stageType[MM::MaxStrLength];
         GetProperty(PROP_StageType, stageType);
@@ -565,7 +567,7 @@ SingleAxisStage::OnStageNameChange(MM::PropertyBase* pProp, MM::ActionType eAct)
 
         selectedStageName_ = std::string(buf);
 
-        if (selectedStageName_.compare(PROPVAL_StageNameCustom) != 0 && selectedStageName_.compare(PROPVAL_StageNameAuto) != 0)
+        if (selectedStageName_.compare(PROPVAL_StageNameCustom) != 0 && selectedStageName_.compare(PROPVAL_StageNameAuto) != 0 && selectedStageName_.compare(PROPVAL_StageNameDEFAULT))
         {
             std::map<int, double> actuatorParams;
             KinesisXMLFunctions::getStageSettings(selectedStageName_, &actuatorParams);
