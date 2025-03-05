@@ -164,6 +164,18 @@ BenchtopBrushless200::Kinesis_SetRotationModes(int mode, int direction) {
         static_cast<MOT_MovementDirections>(direction));
 }
 
+short
+BenchtopBrushless200::Kinesis_SetHomingParams(int direction, int limitSwitchMode, int offsetDistance, int velocity)
+{
+    STATIC_DLL_FUNC(kinesisDll, BMC_SetHomingParamsBlock, func);
+    MOT_HomingParameters params;
+    params.direction = (MOT_TravelDirection)direction;
+    params.limitSwitch = (MOT_HomeLimitSwitchDirection)limitSwitchMode;
+    params.offsetDistance = offsetDistance;
+    params.velocity = velocity;
+
+    return func(CSerialNo(), Channel(), &params);
+}
 
 short
 BenchtopBrushless200::Kinesis_RequestPosition() {

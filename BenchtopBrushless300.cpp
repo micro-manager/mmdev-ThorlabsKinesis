@@ -164,6 +164,18 @@ BenchtopBrushless300::Kinesis_SetRotationModes(int mode, int direction) {
         static_cast<MOT_MovementDirections>(direction));
 }
 
+short
+BenchtopBrushless300::Kinesis_SetHomingParams(int direction, int limitSwitchMode, int offsetDistance, int velocity)
+{
+    STATIC_DLL_FUNC(kinesisDll, BMC_SetHomingParamsBlock, func);
+    MOT_HomingParameters params;
+    params.direction = (MOT_TravelDirection)direction;
+    params.limitSwitch = (MOT_HomeLimitSwitchDirection)limitSwitchMode;
+    params.offsetDistance = offsetDistance;
+    params.velocity = velocity;
+
+    return func(CSerialNo(), Channel(), &params);
+}
 
 short
 BenchtopBrushless300::Kinesis_RequestPosition() {
@@ -206,6 +218,23 @@ BenchtopBrushless300::Kinesis_Home() {
     return func(CSerialNo(), Channel());
 }
 
+short
+BenchtopBrushless300::Kinesis_LoadSettings()
+{
+    STATIC_DLL_FUNC(kinesisDll, BMC_LoadSettings, func);
+    return func(CSerialNo(), Channel());
+}
+
+short
+BenchtopBrushless300::Kinesis_GetConnectedActuatorName(std::string* actuator_name)
+{
+    MOT_StageAxisParameters paramsBlock;
+    STATIC_DLL_FUNC(kinesisDll, BMC_GetStageAxisParamsBlock, func);
+    auto ret = func(CSerialNo(), Channel(), &paramsBlock);
+
+    actuator_name->append(paramsBlock.partNumber);
+    return ret;
+}
 
 short
 BenchtopBrushless300::Kinesis_GetRealValueFromDeviceUnit(int deviceUnits,

@@ -157,6 +157,26 @@ BenchtopStepper::Kinesis_SetRotationModes(int mode, int direction) {
         static_cast<MOT_MovementDirections>(direction));
 }
 
+short
+BenchtopStepper::Kinesis_SetHomingParams(int direction, int limitSwitchMode, int offsetDistance, int velocity)
+{
+    STATIC_DLL_FUNC(kinesisDll, SBC_SetHomingParamsBlock, func);
+    MOT_HomingParameters params;
+    params.direction = (MOT_TravelDirection)direction;
+    params.limitSwitch = (MOT_HomeLimitSwitchDirection)limitSwitchMode;
+    params.offsetDistance = offsetDistance;
+    params.velocity = velocity;
+
+    return func(CSerialNo(), Channel(), &params);
+}
+
+short
+BenchtopStepper::Kinesis_SetLimitSwitchParams(int ccwHardwareLimitMode, int ccwSoftwareLimitPosition,
+    int cwHardwareLimitMode, int cwSoftwareLimitPosition, int softwareLimitMode)
+{
+    STATIC_DLL_FUNC(kinesisDll, SBC_SetLimitSwitchParams, func);
+    return func(CSerialNo(), Channel(), (MOT_LimitSwitchModes)cwHardwareLimitMode, (MOT_LimitSwitchModes)ccwHardwareLimitMode, cwSoftwareLimitPosition, ccwSoftwareLimitPosition, (MOT_LimitSwitchSWModes)softwareLimitMode);
+}
 
 short
 BenchtopStepper::Kinesis_RequestPosition() {
