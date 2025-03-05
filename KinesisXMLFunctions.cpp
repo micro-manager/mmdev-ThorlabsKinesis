@@ -5,7 +5,7 @@ namespace {
     std::string const BBD_SETTINGS_XML_PATH = "C:\\Program Files\\Thorlabs\\Kinesis\\BBD_Stages.xml";
 }
 
-int KinesisXMLFunctions::getSupportedStages(uint32_t device_id, std::vector<std::string>* devices)
+int KinesisXMLFunctions::getSupportedStages(int device_id, std::vector<std::string>* devices)
 {
     tinyxml2::XMLDocument doc;
     doc.LoadFile(SETTINGS_XML_PATH.c_str());

@@ -8,7 +8,7 @@
 class KinesisXMLFunctions
 {
 public:
-	static int getSupportedStages(uint32_t device_id, std::vector<std::string>* devices);
+	static int getSupportedStages(int device_id, std::vector<std::string>* devices);
 	static int getStageSettings(std::string settingsName, std::map<int, double>* settings);
 
 private:
