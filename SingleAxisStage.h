@@ -67,22 +67,22 @@ class SingleAxisStage final : public CStageBase<SingleAxisStage> {
     // Dynamic state:
     MM::MMTime lastMovementStart_{ 0.0 };
 
-    typedef struct MOT_HomingParameters
+    struct MOT_HomingParameters
     {
-        unsigned int direction;
-        unsigned int limitSwitch;
-        double velocity;
-        double offsetDistance;
-    } MOT_HomingParameters;
+        unsigned int direction = 0;
+        unsigned int limitSwitch = 0;
+        double velocity = 0.0;
+        double offsetDistance = 0.0;
+    };
 
-    typedef struct MOT_LimitSwitchParameters
+    struct MOT_LimitSwitchParameters
     {
-        unsigned int ccwHardwareLimitMode;
-        unsigned int ccwSoftwareLimitPosition;
-        unsigned int cwHardwareLimitMode;
-        unsigned int cwSoftwareLimitPosition;
-        unsigned int softwareLimitMode;
-    } MOT_LimitSwitchParameters;
+        unsigned int ccwHardwareLimitMode = 0;
+        unsigned int ccwSoftwareLimitPosition = 0;
+        unsigned int cwHardwareLimitMode = 0;
+        unsigned int cwSoftwareLimitPosition = 0;
+        unsigned int softwareLimitMode = 0;
+    };
 
 public:
     SingleAxisStage(std::string const& name, std::string const& serialNo,
