@@ -247,51 +247,51 @@ SingleAxisStage::Initialize() {
         MOT_LimitSwitchParameters limitParams;
         bool hasLimitParams = false;
 
-        std::map<int, double>::iterator it;
-        for (it = actuatorParams.begin(); it != actuatorParams.end(); it++)
+        for (auto key_val : actuatorParams)
         {
-            switch (it->first)
+            const double value = key_val.second;
+            switch (key_val.first)
             {
             case SettingsTypeMotorPitch:
-                motorPitch_ = it->second;
+                motorPitch_ = value;
                 break;
             case SettingsTypeMotorGearboxRatio:
-                motorGearboxRatio_ = it->second;
+                motorGearboxRatio_ = value;
                 break;
             case SettingsTypeMotorStepsPerRev:
-                motorStepsPerRev_ = it->second;
+                motorStepsPerRev_ = value;
                 break;
             case SettingsTypeMotorUnits:
-                isRotational_ = it->second != 1.0;
+                isRotational_ = value != 1.0;
                 break;
             case SettingsTypeHomeDirection:
-                homeParams.direction = it->second;
+                homeParams.direction = unsigned(value);
                 hasHomeParams = true;
                 break;
             case SettingsTypeHomeLimitSwitch:
-                homeParams.limitSwitch = it->second;
+                homeParams.limitSwitch = unsigned(value);
                 break;
             case SettingsTypeHomeVelocity:
-                homeParams.velocity = it->second;
+                homeParams.velocity = value;
                 break;
             case SettingsTypeHomeZeroOffset:
-                homeParams.offsetDistance = it->second;
+                homeParams.offsetDistance = value;
                 break;
             case SettingsTypeLimitCCWHardLimit:
-                limitParams.ccwHardwareLimitMode = it->second;
+                limitParams.ccwHardwareLimitMode = unsigned(value);
                 hasLimitParams = true;
                 break;
             case SettingsTypeLimitCWHardLimit:
-                limitParams.cwHardwareLimitMode = it->second;
+                limitParams.cwHardwareLimitMode = unsigned(value);
                 break;
             case SettingsTypeLimitCCWSoftLimit:
-                limitParams.ccwSoftwareLimitPosition = it->second;
+                limitParams.ccwSoftwareLimitPosition = unsigned(value);
                 break;
             case SettingsTypeLimitCWSoftLimit:
-                limitParams.cwSoftwareLimitPosition = it->second;
+                limitParams.cwSoftwareLimitPosition = unsigned(value);
                 break;
             case SettingsTypeLimitSoftLimitMode:
-                limitParams.softwareLimitMode = it->second;
+                limitParams.softwareLimitMode = unsigned(value);
                 break;
             default:
                 break;
@@ -305,7 +305,9 @@ SingleAxisStage::Initialize() {
 
         if (hasHomeParams)
         {
-            motorDrive_->SetHomingParameters(homeParams.direction, homeParams.limitSwitch, homeParams.offsetDistance*deviceUnitsPerUm_*1000, homeParams.velocity * deviceUnitsPerUm_ * 1000);
+            const int offsetDistance = std::lround(homeParams.offsetDistance * deviceUnitsPerUm_ * 1000);
+            const int velocity = std::lround(homeParams.velocity * deviceUnitsPerUm_ * 1000);
+            motorDrive_->SetHomingParameters(homeParams.direction, homeParams.limitSwitch, offsetDistance, velocity);
         }
         if (hasLimitParams)
         {
