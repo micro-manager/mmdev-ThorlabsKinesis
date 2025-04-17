@@ -144,7 +144,7 @@ public:
         KinesisDevice{ connection, -1 }
     {}
 
-    KinesisDevice(std::shared_ptr<KinesisDeviceConnection> connection, short channel) :
+    explicit KinesisDevice(std::shared_ptr<KinesisDeviceConnection> connection, short channel) :
         SerialNumbered{ connection->SerialNo() },
         channel_{ channel },
         connection_{ connection }
