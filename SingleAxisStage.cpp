@@ -55,7 +55,7 @@ namespace {
     char const* const PROP_MotorPitch = "MotorPitch";
     char const* const PROP_MotorStepsPerRev = "MotorStepsPerRevolution";
     char const* const PROP_MotorGearboxRatio = "MotorGearboxRatio";
-    char const* const PROP_StageNameSelection = "StagePartNumber";
+    char const* const PROP_StageNameSelection = "ActuatorPartNumber";
     char const* const PROPVAL_StageNameDEFAULT = "SELECT";
     char const* const PROPVAL_StageNameAuto = "AUTO";
     char const* const PROPVAL_StageNameCustom = "CUSTOM";
