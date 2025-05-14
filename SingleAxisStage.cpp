@@ -556,18 +556,16 @@ SingleAxisStage::OnStageNameChange(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
     if (eAct == MM::BeforeGet)
     {
+        pProp->Set(selectedStageName_.c_str());
     }
     else if (eAct == MM::AfterSet)
     {
         //Allows for the stage selection to update the displayed pre-init properties. 
         //Can be useful for making adjustments to existing profiles when switching back to custom input
 
-        char buf[MM::MaxStrLength];
-        (void)GetProperty(PROP_StageNameSelection, buf);
+        pProp->Get(selectedStageName_);
 
-        selectedStageName_ = std::string(buf);
-
-        if (selectedStageName_.compare(PROPVAL_StageNameCustom) != 0 && selectedStageName_.compare(PROPVAL_StageNameAuto) != 0 && selectedStageName_.compare(PROPVAL_StageNameDEFAULT))
+        if (selectedStageName_.compare(PROPVAL_StageNameCustom) != 0 && selectedStageName_.compare(PROPVAL_StageNameAuto) != 0 && selectedStageName_.compare(PROPVAL_StageNameDEFAULT) != 0)
         {
             std::map<int, double> actuatorParams;
             KinesisXMLFunctions::getStageSettings(selectedStageName_, &actuatorParams);
