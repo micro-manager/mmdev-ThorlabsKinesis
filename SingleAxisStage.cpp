@@ -37,11 +37,14 @@
 #include "Connections.h"
 #include "DeviceEnumeration.h"
 #include "Errors.h"
+#include "tinyxml2.h"
+#include "KinesisXMLFunctions.h"
 
 #include <algorithm>
 #include <cmath>
 #include <limits>
-
+#include <vector>
+#include <map>
 
 namespace {
     char const* const PROP_StageType = "StageType";
@@ -49,8 +52,18 @@ namespace {
     char const* const PROPVAL_StageTypeRotational = "Rotational";
     char const* const PROP_DeviceUnitsPerMillimeter = "DeviceUnitsPerMillimeter";
     char const* const PROP_DeviceUnitsPerRevolution = "DeviceUnitsPerRevolution";
+    char const* const PROP_MotorPitch = "MotorPitch";
+    char const* const PROP_MotorStepsPerRev = "MotorStepsPerRevolution";
+    char const* const PROP_MotorGearboxRatio = "MotorGearboxRatio";
+    char const* const PROP_StageNameSelection = "ActuatorPartNumber";
+    char const* const PROPVAL_StageNameDEFAULT = "SELECT";
+    char const* const PROPVAL_StageNameAuto = "AUTO";
+    char const* const PROPVAL_StageNameCustom = "CUSTOM";
 }
 
+//Show pre-init properties for all selection modes
+// Flag older versions of Kinesis and reject if too old
+// Find version when pragma pack issue was fixed
 
 namespace {
     // TODO C++17 will have std::clamp()
@@ -81,9 +94,62 @@ SingleAxisStage::SingleAxisStage(std::string const& name,
         SetErrorText(ERR_OFFSET + item.first, item.second.c_str());
     }
 
+    //Only some controllers allow the user to select the connected stage
+    switch (TypeIDOfSerialNo(serialNo)) {
+    case TypeIDBenchtopStepper1Channel:
+    case TypeIDBenchtopStepper3Channel:
+    case TypeIDKCubeDCServo:
+    case TypeIDKCubeStepper:
+    case TypeIDLongTravelStage:
+    case TypeIDTCubeDCServo:
+    case TypeIDTCubeStepper:
+        supportsStageSelection_ = true;
+        break;
+    }
+
+    //Only some controllers support stage identification. Some might also support selection
+    switch (TypeIDOfSerialNo(serialNo)) {
+    case TypeIDBenchtopBrushless200:
+    case TypeIDBenchtopBrushless300:
+    case TypeIDKCubeDCServo:
+    case TypeIDKCubeBrushless:
+    case TypeIDTCubeBrushless:
+    case TypeIDTCubeDCServo:
+        supportsAutoDetection_ = true;
+        break;
+    }
+
     // In general, the user must tell us whether the stage is linear or
     // rotational. (As far as I can tell, *_GetMotorTravelMode() doesn't work
     // as expected.)
+    auto* pActEx = new CPropertyAction(this, &SingleAxisStage::OnStageNameChange);
+    CreateStringProperty(PROP_StageNameSelection, PROPVAL_StageNameDEFAULT, false, pActEx, true);
+    AddAllowedValue(PROP_StageNameSelection, PROPVAL_StageNameCustom);
+
+    //Properties for motor params
+    CreateFloatProperty(PROP_MotorPitch, 1, false, nullptr, true);
+    CreateFloatProperty(PROP_MotorStepsPerRev, 1, false, nullptr, true);
+    CreateFloatProperty(PROP_MotorGearboxRatio, 1, false, nullptr, true);
+
+    if (supportsAutoDetection_)
+    {
+        AddAllowedValue(PROP_StageNameSelection, PROPVAL_StageNameAuto);
+    }
+
+    if (supportsStageSelection_)
+    {
+        //Read compatible stages from the XML
+        std::vector<std::string> availableStages;
+
+        int err = KinesisXMLFunctions::getSupportedStages(TypeIDOfSerialNo(serialNo), &availableStages);
+        if (!err)
+        {
+            for (std::string stage : availableStages)
+            {
+                AddAllowedValue(PROP_StageNameSelection, stage.c_str());
+            }
+        }
+    }
 
     switch (TypeIDOfSerialNo(serialNo)) {
     case TypeIDCageRotator:
@@ -123,6 +189,7 @@ SingleAxisStage::SingleAxisStage(std::string const& name,
     }
     CreateFloatProperty(PROP_DeviceUnitsPerRevolution,
         defaultDeviceUnitsPerRevolution, false, nullptr, true);
+
 }
 
 
@@ -146,19 +213,145 @@ SingleAxisStage::Initialize() {
     if (err)
         return ERR_OFFSET + err;
 
-    char stageType[MM::MaxStrLength];
-    GetProperty(PROP_StageType, stageType);
-    isRotational_ = stageType != std::string{ PROPVAL_StageTypeLinear };
+    char stageName[MM::MaxStrLength];
+    GetProperty(PROP_StageNameSelection, stageName);
+    if (strcmp(stageName, PROPVAL_StageNameCustom) != 0 && strcmp(stageName, PROPVAL_StageNameDEFAULT) != 0)
+    {
+        std::map<int, double> actuatorParams;
 
-    if (isRotational_) {
-        double deviceUnitsPerRevolution;
-        GetProperty(PROP_DeviceUnitsPerRevolution, deviceUnitsPerRevolution);
-        deviceUnitsPerUm_ = deviceUnitsPerRevolution / 360.0;
+        //Property is available
+        if (supportsAutoDetection_ && stageName == std::string{PROPVAL_StageNameAuto})
+        {
+            err = motorDrive_->LoadSettings();
+            if (err)
+            {
+                //Load settings not supported. Might not need to handle depending on device. Needs further testing
+            }
+
+            std::string actuatorName;
+            err = motorDrive_->GetConnectedActuatorName(&actuatorName);
+            if (err)
+            {
+                //Actuator detection not supported
+                LogMessage(("Filed to detect actuator for serial number:  " + serialNo_).c_str());
+            }
+            KinesisXMLFunctions::getStageSettings(actuatorName, &actuatorParams);
+        }
+        else if (supportsStageSelection_ && (stageName != std::string{ PROPVAL_StageNameAuto }))
+        {
+            KinesisXMLFunctions::getStageSettings(std::string{stageName}, &actuatorParams);
+        }
+
+        MOT_HomingParameters homeParams;
+        bool hasHomeParams = false;
+        MOT_LimitSwitchParameters limitParams;
+        bool hasLimitParams = false;
+
+        for (auto key_val : actuatorParams)
+        {
+            const double value = key_val.second;
+            switch (key_val.first)
+            {
+            case SettingsTypeMotorPitch:
+                motorPitch_ = value;
+                break;
+            case SettingsTypeMotorGearboxRatio:
+                motorGearboxRatio_ = value;
+                break;
+            case SettingsTypeMotorStepsPerRev:
+                motorStepsPerRev_ = value;
+                break;
+            case SettingsTypeMotorUnits:
+                isRotational_ = value != 1.0;
+                break;
+            case SettingsTypeHomeDirection:
+                homeParams.direction = unsigned(value);
+                hasHomeParams = true;
+                break;
+            case SettingsTypeHomeLimitSwitch:
+                homeParams.limitSwitch = unsigned(value);
+                break;
+            case SettingsTypeHomeVelocity:
+                homeParams.velocity = value;
+                break;
+            case SettingsTypeHomeZeroOffset:
+                homeParams.offsetDistance = value;
+                break;
+            case SettingsTypeLimitCCWHardLimit:
+                limitParams.ccwHardwareLimitMode = unsigned(value);
+                hasLimitParams = true;
+                break;
+            case SettingsTypeLimitCWHardLimit:
+                limitParams.cwHardwareLimitMode = unsigned(value);
+                break;
+            case SettingsTypeLimitCCWSoftLimit:
+                limitParams.ccwSoftwareLimitPosition = unsigned(value);
+                break;
+            case SettingsTypeLimitCWSoftLimit:
+                limitParams.cwSoftwareLimitPosition = unsigned(value);
+                break;
+            case SettingsTypeLimitSoftLimitMode:
+                limitParams.softwareLimitMode = unsigned(value);
+                break;
+            default:
+                break;
+            }
+        }
+        deviceUnitsPerUm_ = (motorGearboxRatio_ * motorStepsPerRev_ / motorPitch_)/1000;
+
+        SetProperty(PROP_DeviceUnitsPerMillimeter, std::to_string(deviceUnitsPerUm_ * 1000).c_str());
+        SetProperty(PROP_DeviceUnitsPerRevolution, std::to_string(deviceUnitsPerUm_ * 360).c_str());
+        SetProperty(PROP_StageType, isRotational_ ? PROPVAL_StageTypeRotational : PROPVAL_StageTypeLinear);
+
+        if (hasHomeParams)
+        {
+            const int offsetDistance = std::lround(homeParams.offsetDistance * deviceUnitsPerUm_ * 1000);
+            const int velocity = std::lround(homeParams.velocity * deviceUnitsPerUm_ * 1000);
+            motorDrive_->SetHomingParameters(homeParams.direction, homeParams.limitSwitch, offsetDistance, velocity);
+        }
+        if (hasLimitParams)
+        {
+            motorDrive_->SetLimitSwitchParameters(limitParams.ccwHardwareLimitMode, limitParams.ccwSoftwareLimitPosition, limitParams.cwHardwareLimitMode, limitParams.cwSoftwareLimitPosition, limitParams.softwareLimitMode);
+        }
     }
-    else {
-        double deviceUnitsPerMm;
-        GetProperty(PROP_DeviceUnitsPerMillimeter, deviceUnitsPerMm);
-        deviceUnitsPerUm_ = deviceUnitsPerMm / 1000.0;
+    else if (strcmp(stageName, PROPVAL_StageNameCustom) == 0)
+    {
+        long stepsPerRev = 0;
+        long gearboxRatio = 0;
+        long motorPitch = 0;
+
+        GetProperty(PROP_MotorStepsPerRev, stepsPerRev);
+        GetProperty(PROP_MotorGearboxRatio, gearboxRatio);
+        GetProperty(PROP_MotorPitch, motorPitch);
+
+        motorGearboxRatio_ = gearboxRatio;
+        motorStepsPerRev_ = stepsPerRev;
+        motorPitch_ = motorPitch;
+
+        deviceUnitsPerUm_ = (motorGearboxRatio_ * motorStepsPerRev_ / motorPitch_) / 1000;
+
+        SetProperty(PROP_DeviceUnitsPerMillimeter, std::to_string(deviceUnitsPerUm_*1000).c_str());
+        SetProperty(PROP_DeviceUnitsPerRevolution, std::to_string(deviceUnitsPerUm_*360).c_str());
+    }
+    else
+    {
+        //Error case. Should ony ever hit one of the above cases
+        // Should be hit if using a legacy config file. 
+        // if settings are not loaded from file or controller, use property values
+        char stageType[MM::MaxStrLength];
+        GetProperty(PROP_StageType, stageType);
+        isRotational_ = stageType != std::string{ PROPVAL_StageTypeLinear };
+
+        if (isRotational_) {
+            double deviceUnitsPerRevolution;
+            GetProperty(PROP_DeviceUnitsPerRevolution, deviceUnitsPerRevolution);
+            deviceUnitsPerUm_ = deviceUnitsPerRevolution / 360.0;
+        }
+        else {
+            double deviceUnitsPerMm;
+            GetProperty(PROP_DeviceUnitsPerMillimeter, deviceUnitsPerMm);
+            deviceUnitsPerUm_ = deviceUnitsPerMm / 1000.0;
+        }
     }
 
     // Start polling, which will keep position and status bits up to date.
@@ -356,4 +549,58 @@ SingleAxisStage::MakeName(MotorDrive* motorDrive) const {
     }
 
     return name;
+}
+
+int 
+SingleAxisStage::OnStageNameChange(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+    if (eAct == MM::BeforeGet)
+    {
+        pProp->Set(selectedStageName_.c_str());
+    }
+    else if (eAct == MM::AfterSet)
+    {
+        //Allows for the stage selection to update the displayed pre-init properties. 
+        //Can be useful for making adjustments to existing profiles when switching back to custom input
+
+        pProp->Get(selectedStageName_);
+
+        if (selectedStageName_.compare(PROPVAL_StageNameCustom) != 0 && selectedStageName_.compare(PROPVAL_StageNameAuto) != 0 && selectedStageName_.compare(PROPVAL_StageNameDEFAULT) != 0)
+        {
+            std::map<int, double> actuatorParams;
+            KinesisXMLFunctions::getStageSettings(selectedStageName_, &actuatorParams);
+
+            std::map<int, double>::iterator it;
+            for (it = actuatorParams.begin(); it != actuatorParams.end(); it++)
+            {
+                switch (it->first)
+                {
+                case SettingsTypeMotorPitch:
+                    motorPitch_ = it->second;
+                    break;
+                case SettingsTypeMotorGearboxRatio:
+                    motorGearboxRatio_ = it->second;
+                    break;
+                case SettingsTypeMotorStepsPerRev:
+                    motorStepsPerRev_ = it->second;
+                    break;
+                case SettingsTypeMotorUnits:
+                    isRotational_ = it->second != 1.0;
+                    break;
+                default:
+                    break;
+                }
+            }
+
+            SetProperty(PROP_MotorGearboxRatio, std::to_string(motorGearboxRatio_).c_str());
+            SetProperty(PROP_MotorStepsPerRev, std::to_string(motorStepsPerRev_).c_str());
+            SetProperty(PROP_MotorPitch, std::to_string(motorPitch_).c_str());
+            SetProperty(PROP_StageType, isRotational_ ? PROPVAL_StageTypeRotational : PROPVAL_StageTypeLinear);
+
+            deviceUnitsPerUm_ = (motorGearboxRatio_ * motorStepsPerRev_ / motorPitch_) / 1000;
+            SetProperty(PROP_DeviceUnitsPerMillimeter, std::to_string(deviceUnitsPerUm_ * 1000).c_str());
+            SetProperty(PROP_DeviceUnitsPerRevolution, std::to_string(deviceUnitsPerUm_ * 360).c_str());
+        }
+    }
+    return DEVICE_OK;
 }

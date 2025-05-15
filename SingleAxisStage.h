@@ -53,13 +53,36 @@ class SingleAxisStage final : public CStageBase<SingleAxisStage> {
 
     // Set during Initialize():
     std::unique_ptr<MotorDrive> motorDrive_;
+    std::string selectedStageName_ = "SELECT";
+    bool supportsStageSelection_{ false };
+    bool supportsAutoDetection_{ false };
     bool isRotational_{ false };
     double deviceUnitsPerUm_{ 1.0 }; // Per degree if rotational
+    double motorPitch_{ 1.0 };
+    double motorGearboxRatio_{ 1.0 };
+    double motorStepsPerRev_{1.0};
     int pollingIntervalMs_{ 200 };
     bool didEnable_{ false };
 
     // Dynamic state:
     MM::MMTime lastMovementStart_{ 0.0 };
+
+    struct MOT_HomingParameters
+    {
+        unsigned int direction = 0;
+        unsigned int limitSwitch = 0;
+        double velocity = 0.0;
+        double offsetDistance = 0.0;
+    };
+
+    struct MOT_LimitSwitchParameters
+    {
+        unsigned int ccwHardwareLimitMode = 0;
+        unsigned int ccwSoftwareLimitPosition = 0;
+        unsigned int cwHardwareLimitMode = 0;
+        unsigned int cwSoftwareLimitPosition = 0;
+        unsigned int softwareLimitMode = 0;
+    };
 
 public:
     SingleAxisStage(std::string const& name, std::string const& serialNo,
@@ -79,6 +102,8 @@ public:
     int SetOrigin() override { return DEVICE_UNSUPPORTED_COMMAND; }
     int GetLimits(double&, double&) override { return DEVICE_UNSUPPORTED_COMMAND; }
     int Home();
+
+    int OnStageNameChange(MM::PropertyBase* pProp, MM::ActionType eAct);
 
     bool IsContinuousFocusDrive() const override { return false; }
     int IsStageSequenceable(bool& f) const override { f = false; return DEVICE_OK; }

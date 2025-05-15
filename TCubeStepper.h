@@ -76,6 +76,9 @@ protected: // Motor
     short Kinesis_ResetRotationModes() override;
     short Kinesis_SetRotationModes(int mode, int direction) override;
 
+    short Kinesis_SetHomingParams(int, int, int, int) override { return -1; };
+    short Kinesis_SetLimitSwitchParams(int, int, int, int, int) override { return -1; };
+
     short Kinesis_RequestPosition() override;
     int Kinesis_GetPosition() override;
     long Kinesis_GetPositionCounter() override;

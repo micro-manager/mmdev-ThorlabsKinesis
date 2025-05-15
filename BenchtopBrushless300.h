@@ -78,6 +78,9 @@ protected: // Motor
     short Kinesis_ResetRotationModes() override;
     short Kinesis_SetRotationModes(int mode, int direction) override;
 
+    short Kinesis_SetHomingParams(int direction, int limitSwitchMode, int offsetDistance, int velocity) override;
+    short Kinesis_SetLimitSwitchParams(int, int, int, int, int) override { return -1; }
+
     short Kinesis_RequestPosition() override;
     int Kinesis_GetPosition() override;
     long Kinesis_GetPositionCounter() override;
@@ -85,6 +88,9 @@ protected: // Motor
 
     bool Kinesis_CanHome() override;
     short Kinesis_Home() override;
+
+    short Kinesis_LoadSettings() override;
+    short Kinesis_GetConnectedActuatorName(std::string* actuator_name) override;
 
     short Kinesis_GetRealValueFromDeviceUnit(int deviceUnits,
         double* realValue, int unitType) override;

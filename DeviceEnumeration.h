@@ -68,7 +68,7 @@ inline bool IsValidSerialNo(std::string const& serialNo) {
     return true;
 }
 
-inline uint32_t TypeIDOfSerialNo(std::string const& serialNo) {
+inline int TypeIDOfSerialNo(std::string const& serialNo) {
     if (!IsValidSerialNo(serialNo))
         return 0;
     if (serialNo.size() == 8)
