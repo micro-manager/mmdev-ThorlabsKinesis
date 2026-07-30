@@ -225,7 +225,7 @@ SingleAxisStage::Initialize() {
         std::map<int, double> actuatorParams;
 
         //Property is available
-        if (supportsAutoDetection_ && stageName == std::string{PROPVAL_StageNameAuto})
+        if (supportsAutoDetection_ && stageName == std::string{ PROPVAL_StageNameAuto })
         {
             err = motorDrive_->LoadSettings();
             if (err)
@@ -244,7 +244,7 @@ SingleAxisStage::Initialize() {
         }
         else if (supportsStageSelection_ && (stageName != std::string{ PROPVAL_StageNameAuto }))
         {
-            KinesisXMLFunctions::getStageSettings(std::string{stageName}, &actuatorParams);
+            KinesisXMLFunctions::getStageSettings(std::string{ stageName }, &actuatorParams);
         }
 
         MOT_HomingParameters homeParams;
@@ -302,10 +302,19 @@ SingleAxisStage::Initialize() {
                 break;
             }
         }
-        deviceUnitsPerUm_ = (motorGearboxRatio_ * motorStepsPerRev_ / motorPitch_)/1000;
 
+        //Edge Case for FW103
+        if (motorPitch_ == 360.0)
+        {
+            motorPitch_ = 1.0;
+        }
+
+        //Formula (motorGearboxRatio_ * motorStepsPerRev_ / motorPitch_) is 1mm or 1degree of motion
+        deviceUnitsPerUm_ = (motorGearboxRatio_ * motorStepsPerRev_ / motorPitch_) / 1000;
         SetProperty(PROP_DeviceUnitsPerMillimeter, std::to_string(deviceUnitsPerUm_ * 1000).c_str());
-        SetProperty(PROP_DeviceUnitsPerRevolution, std::to_string(deviceUnitsPerUm_ * 360).c_str());
+
+        //Device units per Revolution of the stage = (motorGearboxRatio_ * motorStepsPerRev_ / motorPitch_) * 360 degrees
+        SetProperty(PROP_DeviceUnitsPerRevolution, std::to_string(deviceUnitsPerUm_ * 1000 * 360).c_str());
         SetProperty(PROP_StageType, isRotational_ ? PROPVAL_StageTypeRotational : PROPVAL_StageTypeLinear);
 
         if (hasHomeParams)
@@ -318,12 +327,16 @@ SingleAxisStage::Initialize() {
         {
             motorDrive_->SetLimitSwitchParameters(limitParams.ccwHardwareLimitMode, limitParams.ccwSoftwareLimitPosition, limitParams.cwHardwareLimitMode, limitParams.cwSoftwareLimitPosition, limitParams.softwareLimitMode);
         }
+        if (isRotational_)
+        {
+            deviceUnitsPerUm_ *= 1000;
+        }
     }
     else if (strcmp(stageName, PROPVAL_StageNameCustom) == 0)
     {
-        long stepsPerRev = 0;
-        long gearboxRatio = 0;
-        long motorPitch = 0;
+        double stepsPerRev = 0;
+        double gearboxRatio = 0;
+        double motorPitch = 0;
 
         GetProperty(PROP_MotorStepsPerRev, stepsPerRev);
         GetProperty(PROP_MotorGearboxRatio, gearboxRatio);
@@ -332,15 +345,18 @@ SingleAxisStage::Initialize() {
         motorGearboxRatio_ = gearboxRatio;
         motorStepsPerRev_ = stepsPerRev;
         motorPitch_ = motorPitch;
+        if (motorPitch == 360.0)
+        {
+            motorPitch = 1.0;
+        }
 
         deviceUnitsPerUm_ = (motorGearboxRatio_ * motorStepsPerRev_ / motorPitch_) / 1000;
 
-        SetProperty(PROP_DeviceUnitsPerMillimeter, std::to_string(deviceUnitsPerUm_*1000).c_str());
-        SetProperty(PROP_DeviceUnitsPerRevolution, std::to_string(deviceUnitsPerUm_*360).c_str());
+        SetProperty(PROP_DeviceUnitsPerMillimeter, std::to_string(deviceUnitsPerUm_ * 1000).c_str());
+        SetProperty(PROP_DeviceUnitsPerRevolution, std::to_string(deviceUnitsPerUm_ * 360).c_str());
     }
     else
     {
-        //Error case. Should ony ever hit one of the above cases
         // Should be hit if using a legacy config file. 
         // if settings are not loaded from file or controller, use property values
         char stageType[MM::MaxStrLength];
@@ -350,7 +366,7 @@ SingleAxisStage::Initialize() {
         if (isRotational_) {
             double deviceUnitsPerRevolution;
             GetProperty(PROP_DeviceUnitsPerRevolution, deviceUnitsPerRevolution);
-            deviceUnitsPerUm_ = deviceUnitsPerRevolution / 360.0;
+            deviceUnitsPerUm_ = deviceUnitsPerRevolution / 360.0 / 1000.0;
         }
         else {
             double deviceUnitsPerMm;
@@ -657,6 +673,12 @@ SingleAxisStage::OnStageNameChange(MM::PropertyBase* pProp, MM::ActionType eAct)
             motorGearboxRatio_ = xmlMotorGearboxRatio_;
             motorStepsPerRev_ = xmlMotorStepsPerRev_;
             motorPitch_ = xmlMotorPitch_;
+          
+            //Edge Case for FW103
+            if (motorPitch_ == 360.0)
+            {
+                motorPitch_ = 1.0;
+            }
 
             OnPropertyChanged(PROP_MotorGearboxRatio, std::to_string(motorGearboxRatio_).c_str());
             OnPropertyChanged(PROP_MotorStepsPerRev, std::to_string(motorStepsPerRev_).c_str());
@@ -665,7 +687,12 @@ SingleAxisStage::OnStageNameChange(MM::PropertyBase* pProp, MM::ActionType eAct)
 
             deviceUnitsPerUm_ = (motorGearboxRatio_ * motorStepsPerRev_ / motorPitch_) / 1000;
             SetProperty(PROP_DeviceUnitsPerMillimeter, std::to_string(deviceUnitsPerUm_ * 1000).c_str());
-            SetProperty(PROP_DeviceUnitsPerRevolution, std::to_string(deviceUnitsPerUm_ * 360).c_str());
+            SetProperty(PROP_DeviceUnitsPerRevolution, std::to_string(deviceUnitsPerUm_ * 360 * 1000).c_str());
+
+            if (isRotational_)
+            {
+                deviceUnitsPerUm_ *= 1000;
+            }
         }
     }
     return DEVICE_OK;
